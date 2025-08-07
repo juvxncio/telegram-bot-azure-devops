@@ -23,12 +23,23 @@ def puxar_projetos():
             if not ('SUSPENSO' in projeto['name'].upper()):
                 lista_projetos.append(projeto['name'])
     else:
-        print('Não foi possível se conectar ao Azure DevOps')
+        print('Não foi possível se conectar ao Azure DevOps', response.status_code)
 
 puxar_projetos()
 
-for projeto in lista_projetos:
-    URLS_TIMES.append(f'{URL_BASE}projects/{projeto}/teams?api-version=7.0')
+def puxar_times():
 
-for url_time in URLS_TIMES:
-    print(url_time)
+    for projeto in lista_projetos:
+        URLS_TIMES.append(f'{URL_BASE}projects/{projeto}/teams?api-version=7.0')
+
+    for url_time in URLS_TIMES:
+        response = requests.get(url_time, auth=HTTPBasicAuth('', PAT))
+
+        if response.status_code == 200:
+            times = response.json()['value']
+            for time in times:
+                print(time['name'])
+        else:
+            print('Não foi possível se conectar ao Azure DevOps')
+
+puxar_times()
