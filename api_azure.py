@@ -5,7 +5,6 @@ from requests.auth import HTTPBasicAuth
 
 load_dotenv()
 
-ORGANIZATION = os.getenv('ORGANIZATION')
 PAT = os.getenv('PAT')
 URL_BASE = os.getenv('URL_BASE')
 URL_PROJETOS = f'{URL_BASE}_apis/projects?api-version=7.0'
@@ -18,7 +17,6 @@ lista_times_ignorados_str = os.getenv('lista_times_ignorados')
 lista_times_ignorados = lista_times_ignorados_str.split(',')
 lista_times_ativos = []
 projetos_times = []
-time_index = 0
 
 def puxar_projetos():
 
@@ -51,7 +49,8 @@ def puxar_times():
 
 puxar_times()
 
-mesclar_projeto_com_time()
+def mesclar_projeto_com_time():
+    time_index = 0
     for time in lista_todos_times:
         if not any(palavra in time for palavra in lista_times_ignorados):
             lista_times_ativos.append(time)
@@ -66,3 +65,11 @@ mesclar_projeto_com_time()
             time_index += 1
 
 mesclar_projeto_com_time()
+
+for projeto, time in projetos_times:
+    url = f'{URL_BASE}{projeto}/{time}/_apis/work/teamsettings/iterations?api-version=7.0'
+    url_sprints.append(url)
+
+    for url in url_sprints:
+        response = requests.get(url, auth=HTTPBasicAuth('', PAT))
+        print(response.json()['value'])
