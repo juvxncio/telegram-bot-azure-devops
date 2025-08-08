@@ -9,9 +9,10 @@ ORGANIZATION = os.getenv('ORGANIZATION')
 PAT = os.getenv('PAT')
 URL_BASE = os.getenv('URL_BASE')
 URL_PROJETOS = f'{URL_BASE}projects?api-version=7.0'
-URLS_TIMES = []
 
+url_times = []
 lista_projetos = []
+lista_times = []
 
 def puxar_projetos():
 
@@ -30,16 +31,16 @@ puxar_projetos()
 def puxar_times():
 
     for projeto in lista_projetos:
-        URLS_TIMES.append(f'{URL_BASE}projects/{projeto}/teams?api-version=7.0')
+        url_times.append(f'{URL_BASE}projects/{projeto}/teams?api-version=7.0')
 
-    for url_time in URLS_TIMES:
+    for url_time in url_times:
         response = requests.get(url_time, auth=HTTPBasicAuth('', PAT))
 
         if response.status_code == 200:
             times = response.json()['value']
             for time in times:
-                print(time['name'])
+                lista_times.append(time['name'])
         else:
-            print('Não foi possível se conectar ao Azure DevOps')
+            print('Não foi possível se conectar ao Azure DevOps', response.status_code)
 
 puxar_times()
