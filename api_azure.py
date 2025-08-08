@@ -17,6 +17,8 @@ lista_todos_times = []
 lista_times_ignorados_str = os.getenv('lista_times_ignorados')
 lista_times_ignorados = lista_times_ignorados_str.split(',')
 lista_times_ativos = []
+projetos_times = []
+time_index = 0
 
 def puxar_projetos():
 
@@ -49,11 +51,18 @@ def puxar_times():
 
 puxar_times()
 
-for time in lista_todos_times:
-    if not any(palavra in time for palavra in lista_times_ignorados):
-        lista_times_ativos.append(time)
+mesclar_projeto_com_time()
+    for time in lista_todos_times:
+        if not any(palavra in time for palavra in lista_times_ignorados):
+            lista_times_ativos.append(time)
 
-# for time in lista_todos_times:
-#     url_sprints.append(f'{URL_BASE}{project}/{time}/_apis/work/teamsettings/iterations?api-version=7.0')
 
-print(type(lista_times_ignorados))
+    for projeto in lista_projetos:
+        projetos_times.append((projeto, lista_times_ativos[time_index]))
+        time_index += 1
+
+        if (projeto.startswith('CODAE') or projeto.startswith('COPED')) and time_index < len(lista_times_ativos):
+            projetos_times.append((projeto, lista_times_ativos[time_index]))
+            time_index += 1
+
+mesclar_projeto_com_time()
