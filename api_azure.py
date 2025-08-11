@@ -30,8 +30,6 @@ def puxar_projetos():
     else:
         print('Não foi possível se conectar ao Azure DevOps', response.status_code)
 
-puxar_projetos()
-
 def puxar_times():
 
     for projeto in lista_projetos:
@@ -46,8 +44,6 @@ def puxar_times():
                 lista_todos_times.append(time['name'])
         else:
             print('Não foi possível se conectar ao Azure DevOps', response.status_code)
-
-puxar_times()
 
 def mesclar_projeto_com_time():
     time_index = 0
@@ -64,12 +60,27 @@ def mesclar_projeto_com_time():
             projetos_times.append((projeto, lista_times_ativos[time_index]))
             time_index += 1
 
-mesclar_projeto_com_time()
+def busca_sprint():
 
-for projeto, time in projetos_times:
-    url = f'{URL_BASE}{projeto}/{time}/_apis/work/teamsettings/iterations?api-version=7.0'
-    url_sprints.append(url)
+    for projeto, time in projetos_times:
+        url = f'{URL_BASE}{projeto}/{time}/_apis/work/teamsettings/iterations?api-version=7.0'
+        url_sprints.append(url)
 
     for url in url_sprints:
         response = requests.get(url, auth=HTTPBasicAuth('', PAT))
-        print(response.json()['value'])
+    
+        if response.status_code == 200:
+            sprints = response.json()['value']
+            for sprint in sprints:
+                print(f" - {sprint['name']} ({sprint['attributes']['startDate']} → {sprint['attributes']['finishDate']})")
+        else:
+            print('Erro ao buscar sprints para {projeto}/{time}: {response.status_code}')
+
+def main():
+    puxar_projetos()
+    puxar_times()
+    mesclar_projeto_com_time()
+    busca_sprint()
+
+if __name__ == '__main__':
+    main()
