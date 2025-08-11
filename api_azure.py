@@ -3,6 +3,7 @@ import os
 import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
+from urllib.parse import quote
 
 load_dotenv()
 
@@ -74,37 +75,34 @@ def mesclar_projeto_com_time():
 
 
 def busca_sprint():
-
     mes_atual = datetime.now().month
     ano_atual = datetime.now().year
+    sprints_mes = []
 
     for projeto, time in projetos_times:
-        url = f'{URL_BASE}{projeto}/{time}/_apis/work/teamsettings/iterations?api-version=7.0'
+        url = f'{URL_BASE}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations?api-version=7.0'
         response = requests.get(url, auth=HTTPBasicAuth('', PAT))
 
-        if response.status_code == 200:
-            sprints = response.json()['value']
-            for sprint in sprints:
-                start_raw = sprint['attributes'].get('startDate')
-                finish_raw = sprint['attributes'].get('finishDate')
+        if response.status_code != 200:
+            print(f"Erro ao buscar sprints para {projeto}/{time}: {response.status_code}")
+            continue
 
-                if not start_raw or not finish_raw:
-                    continue
-                inicio = datetime.fromisoformat(
-                    sprint['attributes']['startDate'].replace('Z', '+00:00')
-                )
-                fim = datetime.fromisoformat(
-                    sprint['attributes']['finishDate'].replace('Z', '+00:00')
-                )
-                if inicio.month == mes_atual and inicio.year == ano_atual:
-                    print(
-                        f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})"
-                    )
-        else:
-            print(
-                'Erro ao buscar sprints para {projeto}/{time}: {response.status_code}'
-            )
+        sprints = response.json()['value']
+        for sprint in sprints:
+            start_raw = sprint['attributes'].get('startDate')
+            finish_raw = sprint['attributes'].get('finishDate')
 
+            if not start_raw or not finish_raw:
+                continue
+
+            inicio = datetime.fromisoformat(start_raw.replace('Z', '+00:00'))
+            fim = datetime.fromisoformat(finish_raw.replace('Z', '+00:00'))
+
+            if inicio.month == mes_atual and inicio.year == ano_atual:
+                print(f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})")
+                sprints_mes.append((projeto, time, sprint['id']))
+
+    return sprints_mes
 
 def main():
     puxar_projetos()
@@ -115,3 +113,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
