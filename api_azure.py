@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 import requests
 from requests.auth import HTTPBasicAuth
+from datetime import datetime
 
 load_dotenv()
 
@@ -10,13 +11,13 @@ URL_BASE = os.getenv('URL_BASE')
 URL_PROJETOS = f'{URL_BASE}_apis/projects?api-version=7.0'
 
 url_times = []
-url_sprints = []
 lista_projetos = []
 lista_todos_times = []
 lista_times_ignorados_str = os.getenv('lista_times_ignorados')
 lista_times_ignorados = lista_times_ignorados_str.split(',')
 lista_times_ativos = []
 projetos_times = []
+
 
 def puxar_projetos():
 
@@ -28,12 +29,18 @@ def puxar_projetos():
             if not ('SUSPENSO' in projeto['name'].upper()):
                 lista_projetos.append(projeto['name'])
     else:
-        print('Não foi possível se conectar ao Azure DevOps', response.status_code)
+        print(
+            'Não foi possível se conectar ao Azure DevOps',
+            response.status_code,
+        )
+
 
 def puxar_times():
 
     for projeto in lista_projetos:
-        url_times.append(f'{URL_BASE}_apis/projects/{projeto}/teams?api-version=7.0')
+        url_times.append(
+            f'{URL_BASE}_apis/projects/{projeto}/teams?api-version=7.0'
+        )
 
     for url_time in url_times:
         response = requests.get(url_time, auth=HTTPBasicAuth('', PAT))
@@ -43,7 +50,11 @@ def puxar_times():
             for time in times:
                 lista_todos_times.append(time['name'])
         else:
-            print('Não foi possível se conectar ao Azure DevOps', response.status_code)
+            print(
+                'Não foi possível se conectar ao Azure DevOps',
+                response.status_code,
+            )
+
 
 def mesclar_projeto_com_time():
     time_index = 0
@@ -51,36 +62,56 @@ def mesclar_projeto_com_time():
         if not any(palavra in time for palavra in lista_times_ignorados):
             lista_times_ativos.append(time)
 
-
     for projeto in lista_projetos:
         projetos_times.append((projeto, lista_times_ativos[time_index]))
         time_index += 1
 
-        if (projeto.startswith('CODAE') or projeto.startswith('COPED')) and time_index < len(lista_times_ativos):
+        if (
+            projeto.startswith('CODAE') or projeto.startswith('COPED')
+        ) and time_index < len(lista_times_ativos):
             projetos_times.append((projeto, lista_times_ativos[time_index]))
             time_index += 1
 
+
 def busca_sprint():
+
+    mes_atual = datetime.now().month
+    ano_atual = datetime.now().year
 
     for projeto, time in projetos_times:
         url = f'{URL_BASE}{projeto}/{time}/_apis/work/teamsettings/iterations?api-version=7.0'
-        url_sprints.append(url)
-
-    for url in url_sprints:
         response = requests.get(url, auth=HTTPBasicAuth('', PAT))
-    
+
         if response.status_code == 200:
             sprints = response.json()['value']
             for sprint in sprints:
-                print(f" - {sprint['name']} ({sprint['attributes']['startDate']} → {sprint['attributes']['finishDate']})")
+                start_raw = sprint['attributes'].get('startDate')
+                finish_raw = sprint['attributes'].get('finishDate')
+
+                if not start_raw or not finish_raw:
+                    continue
+                inicio = datetime.fromisoformat(
+                    sprint['attributes']['startDate'].replace('Z', '+00:00')
+                )
+                fim = datetime.fromisoformat(
+                    sprint['attributes']['finishDate'].replace('Z', '+00:00')
+                )
+                if inicio.month == mes_atual and inicio.year == ano_atual:
+                    print(
+                        f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})"
+                    )
         else:
-            print('Erro ao buscar sprints para {projeto}/{time}: {response.status_code}')
+            print(
+                'Erro ao buscar sprints para {projeto}/{time}: {response.status_code}'
+            )
+
 
 def main():
     puxar_projetos()
     puxar_times()
     mesclar_projeto_com_time()
     busca_sprint()
+
 
 if __name__ == '__main__':
     main()
