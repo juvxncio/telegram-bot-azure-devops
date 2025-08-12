@@ -75,7 +75,7 @@ def mesclar_projeto_com_time():
 
 
 def busca_sprint():
-    mes_atual = datetime.now().month
+    mes_atual = 6
     ano_atual = datetime.now().year
     sprints_mes = []
 
@@ -84,7 +84,9 @@ def busca_sprint():
         response = requests.get(url, auth=HTTPBasicAuth('', PAT))
 
         if response.status_code != 200:
-            print(f"Erro ao buscar sprints para {projeto}/{time}: {response.status_code}")
+            print(
+                f'Erro ao buscar sprints para {projeto}/{time}: {response.status_code}'
+            )
             continue
 
         sprints = response.json()['value']
@@ -99,18 +101,40 @@ def busca_sprint():
             fim = datetime.fromisoformat(finish_raw.replace('Z', '+00:00'))
 
             if inicio.month == mes_atual and inicio.year == ano_atual:
-                print(f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})")
+                print(
+                    f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})"
+                )
                 sprints_mes.append((projeto, time, sprint['id']))
 
     return sprints_mes
+
+
+def busca_work_items(projeto, time, sprint_id):
+    url = f'{URL_BASE}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0'
+    response = requests.get(url, auth=HTTPBasicAuth('', PAT))
+    if response.status_code != 200:
+        return []
+
+    items_data = response.json().get('workItemRelations', [])
+    return [
+        str(item['target']['id']) for item in items_data if 'target' in item
+    ]
+
+
+def gera_relatorio():
+    sprints = busca_sprint()
+
+    for projeto, time, sprint_id in sprints:
+        ids = busca_work_items(projeto, time, sprint_id)
+        print(ids)
+
 
 def main():
     puxar_projetos()
     puxar_times()
     mesclar_projeto_com_time()
-    busca_sprint()
+    gera_relatorio()
 
 
 if __name__ == '__main__':
     main()
-
