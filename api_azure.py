@@ -101,9 +101,9 @@ def busca_sprint():
             fim = datetime.fromisoformat(finish_raw.replace('Z', '+00:00'))
 
             if inicio.month == mes_atual and inicio.year == ano_atual:
-                print(
-                    f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})"
-                )
+                # print(
+                #     f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})"
+                # )
                 sprints_mes.append((projeto, time, sprint['id']))
 
     return sprints_mes
@@ -152,13 +152,13 @@ def busca_detalhes_work_items(projeto, ids):
         if response.status_code != 200:
             continue
 
-        for wi in response.json().get('value', []):
+        for work_item in response.json().get('value', []):
             assigned_to = (
-                wi['fields']
+                work_item['fields']
                 .get('System.AssignedTo', {})
                 .get('displayName', 'Sem responsável')
             )
-            horas = wi['fields'].get(
+            horas = work_item['fields'].get(
                 'Microsoft.VSTS.Scheduling.CompletedWork', 0
             )
             horas_por_pessoa[assigned_to] = (
@@ -179,7 +179,7 @@ def gera_relatorio():
         for pessoa, total in horas.items():
             total_por_pessoa[pessoa] = total_por_pessoa.get(pessoa, 0) + total
 
-    print('\n📊 Horas por profissional no mês atual:')
+    print('\nHoras por profissional no mês:')
     for pessoa, horas in sorted(
         total_por_pessoa.items(), key=lambda x: x[0].lower()
     ):
