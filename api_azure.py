@@ -75,7 +75,7 @@ def mesclar_projeto_com_time():
 
 
 def busca_sprint():
-    mes_atual = 6
+    mes_atual = datetime.now().month
     ano_atual = datetime.now().year
     sprints_mes = []
 
@@ -121,12 +121,47 @@ def busca_work_items(projeto, time, sprint_id):
     ]
 
 
+def busca_detalhes_work_items(projeto, ids):
+    horas_por_pessoa = {}
+    if not ids:
+        return horas_por_pessoa
+
+    ids_str = ','.join(ids)
+    url = f'{URL_BASE}{quote(projeto)}/_apis/wit/workitems?ids={ids_str}&fields=System.Title,System.AssignedTo,Microsoft.VSTS.Scheduling.CompletedWork&api-version=7.0'
+    response = requests.get(url, auth=HTTPBasicAuth('', PAT))
+    if response.status_code != 200:
+        return horas_por_pessoa
+
+    for wi in response.json().get('value', []):
+        assigned_to = (
+            wi['fields']
+            .get('System.AssignedTo', {})
+            .get('displayName', 'Sem responsável')
+        )
+        horas = wi['fields'].get('Microsoft.VSTS.Scheduling.CompletedWork', 0)
+        horas_por_pessoa[assigned_to] = (
+            horas_por_pessoa.get(assigned_to, 0) + horas
+        )
+
+    return horas_por_pessoa
+
+
 def gera_relatorio():
+    total_por_pessoa = {}
     sprints = busca_sprint()
 
     for projeto, time, sprint_id in sprints:
         ids = busca_work_items(projeto, time, sprint_id)
-        print(ids)
+        horas = busca_detalhes_work_items(projeto, ids)
+
+        for pessoa, total in horas.items():
+            total_por_pessoa[pessoa] = total_por_pessoa.get(pessoa, 0) + total
+
+    print('\nHoras por profissional no mês atual:')
+    for pessoa, horas in sorted(
+        total_por_pessoa.items(), key=lambda x: x[0].lower()
+    ):
+        print(f'{pessoa}: {horas}h')
 
 
 def main():
