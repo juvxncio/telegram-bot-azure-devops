@@ -11,32 +11,31 @@ PAT = os.getenv('PAT')
 URL_BASE = os.getenv('URL_BASE')
 URL_PROJETOS = f'{URL_BASE}_apis/projects?api-version=7.0'
 
-url_times = []
-lista_projetos = []
-lista_todos_times = []
 lista_times_ignorados_str = os.getenv('lista_times_ignorados')
-lista_times_ignorados = lista_times_ignorados_str.split(',')
-lista_times_ativos = []
-projetos_times = []
+lista_times_ignorados = (
+    lista_times_ignorados_str.split(',') if lista_times_ignorados_str else []
+)
 
 
 def puxar_projetos():
-
+    lista_projetos = []
     response = requests.get(URL_PROJETOS, auth=HTTPBasicAuth('', PAT))
-
     if response.status_code == 200:
         projetos = response.json()['value']
         for projeto in projetos:
-            if not ('SUSPENSO' in projeto['name'].upper()):
+            if 'SUSPENSO' not in projeto['name'].upper():
                 lista_projetos.append(projeto['name'])
     else:
         print(
             'Não foi possível se conectar ao Azure DevOps',
             response.status_code,
         )
+    return lista_projetos
 
 
-def puxar_times():
+def puxar_times(lista_projetos):
+    url_times = []
+    lista_todos_times = []
 
     for projeto in lista_projetos:
         url_times.append(
@@ -45,7 +44,6 @@ def puxar_times():
 
     for url_time in url_times:
         response = requests.get(url_time, auth=HTTPBasicAuth('', PAT))
-
         if response.status_code == 200:
             times = response.json()['value']
             for time in times:
@@ -55,15 +53,21 @@ def puxar_times():
                 'Não foi possível se conectar ao Azure DevOps',
                 response.status_code,
             )
+    return lista_todos_times
 
 
-def mesclar_projeto_com_time():
+def mesclar_projeto_com_time(lista_projetos, lista_todos_times):
+    lista_times_ativos = []
+    projetos_times = []
     time_index = 0
+
     for time in lista_todos_times:
         if not any(palavra in time for palavra in lista_times_ignorados):
             lista_times_ativos.append(time)
 
     for projeto in lista_projetos:
+        if time_index >= len(lista_times_ativos):
+            break
         projetos_times.append((projeto, lista_times_ativos[time_index]))
         time_index += 1
 
@@ -72,10 +76,11 @@ def mesclar_projeto_com_time():
         ) and time_index < len(lista_times_ativos):
             projetos_times.append((projeto, lista_times_ativos[time_index]))
             time_index += 1
+    return projetos_times
 
 
-def busca_sprint():
-    mes_atual = datetime.now().month
+def busca_sprint(projetos_times):
+    mes_atual = datetime.now().month - 1
     ano_atual = datetime.now().year
     sprints_mes = []
 
@@ -105,20 +110,9 @@ def busca_sprint():
                 #     f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})"
                 # )
                 sprints_mes.append((projeto, time, sprint['id']))
-
+    for i in sprints_mes:
+        print(i)
     return sprints_mes
-
-
-def busca_work_items(projeto, time, sprint_id):
-    url = f'{URL_BASE}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0'
-    response = requests.get(url, auth=HTTPBasicAuth('', PAT))
-    if response.status_code != 200:
-        return []
-
-    items_data = response.json().get('workItemRelations', [])
-    return [
-        str(item['target']['id']) for item in items_data if 'target' in item
-    ]
 
 
 def busca_work_items(projeto, time, sprint_id):
@@ -169,8 +163,14 @@ def busca_detalhes_work_items(projeto, ids):
 
 
 def gera_relatorio():
+    lista_projetos = puxar_projetos()
+    lista_todos_times = puxar_times(lista_projetos)
+    projetos_times = mesclar_projeto_com_time(
+        lista_projetos, lista_todos_times
+    )
+
     total_por_pessoa = {}
-    sprints = busca_sprint()
+    sprints = busca_sprint(projetos_times)
 
     for projeto, time, sprint_id in sprints:
         ids = busca_work_items(projeto, time, sprint_id)
@@ -179,7 +179,7 @@ def gera_relatorio():
         for pessoa, total in horas.items():
             total_por_pessoa[pessoa] = total_por_pessoa.get(pessoa, 0) + total
 
-    print('\nHoras por profissional no mês:')
+    print('\n📊 Horas por profissional no mês atual:')
     for pessoa, horas in sorted(
         total_por_pessoa.items(), key=lambda x: x[0].lower()
     ):
@@ -187,11 +187,8 @@ def gera_relatorio():
 
 
 def main():
-    puxar_projetos()
-    puxar_times()
-    mesclar_projeto_com_time()
-    gera_relatorio()
+    return gera_relatorio()
 
 
 if __name__ == '__main__':
-    main()
+    print(main())
