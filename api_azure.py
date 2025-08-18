@@ -4,6 +4,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 from urllib.parse import quote
+from babel.dates import format_date
 
 load_dotenv()
 
@@ -79,9 +80,9 @@ def mesclar_projeto_com_time(lista_projetos, lista_todos_times):
     return projetos_times
 
 
-def busca_sprint(projetos_times):
-    mes_atual = datetime.now().month - 1
-    ano_atual = datetime.now().year
+def busca_sprint(projetos_times, mes_alvo=None, ano_alvo=None):
+    mes_atual = mes_alvo or datetime.now().month
+    ano_atual = ano_alvo or datetime.now().year
     sprints_mes = []
 
     for projeto, time in projetos_times:
@@ -110,8 +111,7 @@ def busca_sprint(projetos_times):
                 #     f"Sprint atual: {sprint['name']} Id: {sprint['id']} ({inicio.date()} → {fim.date()})"
                 # )
                 sprints_mes.append((projeto, time, sprint['id']))
-    for i in sprints_mes:
-        print(i)
+
     return sprints_mes
 
 
@@ -162,7 +162,7 @@ def busca_detalhes_work_items(projeto, ids):
     return horas_por_pessoa
 
 
-def gera_relatorio():
+def gera_relatorio(mes=None, ano=None):
     lista_projetos = puxar_projetos()
     lista_todos_times = puxar_times(lista_projetos)
     projetos_times = mesclar_projeto_com_time(
@@ -170,7 +170,7 @@ def gera_relatorio():
     )
 
     total_por_pessoa = {}
-    sprints = busca_sprint(projetos_times)
+    sprints = busca_sprint(projetos_times, mes_alvo=mes, ano_alvo=ano)
 
     for projeto, time, sprint_id in sprints:
         ids = busca_work_items(projeto, time, sprint_id)
@@ -179,15 +179,25 @@ def gera_relatorio():
         for pessoa, total in horas.items():
             total_por_pessoa[pessoa] = total_por_pessoa.get(pessoa, 0) + total
 
-    print('\n📊 Horas por profissional no mês atual:')
+    data = datetime(ano or datetime.now().year, mes or datetime.now().month, 1)
+    mes_nome = format_date(
+        data, 'LLLL/yyyy', locale='pt_BR'
+    )  # <-- Aqui entra o Babel
+
+    if not total_por_pessoa:
+        return f'Nenhuma hora registrada em {mes_nome}.'
+
+    texto = f'📊 Horas por profissional em {mes_nome}:\n'
     for pessoa, horas in sorted(
         total_por_pessoa.items(), key=lambda x: x[0].lower()
     ):
-        print(f'{pessoa}: {horas}h')
+        texto += f'{pessoa}: {horas}h\n'
+
+    return texto
 
 
-def main():
-    return gera_relatorio()
+def main(mes=None, ano=None):
+    return gera_relatorio(mes, ano)
 
 
 if __name__ == '__main__':
