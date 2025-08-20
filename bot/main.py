@@ -12,6 +12,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+
 def main():
     application = Application.builder().token(TELEGRAM_TOKEN).build()
     application.add_handler(CommandHandler('horas', handlers.horas))

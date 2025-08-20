@@ -70,6 +70,7 @@ def mesclar_projeto_com_time(lista_projetos, lista_todos_times):
 
 def busca_sprint(projetos_times, mes_alvo=None, ano_alvo=None):
     from datetime import datetime
+
     mes_atual = mes_alvo or datetime.now().month
     ano_atual = ano_alvo or datetime.now().year
     sprints_mes = []

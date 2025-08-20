@@ -2,6 +2,7 @@ import calendar
 from datetime import datetime, timedelta
 import holidays
 
+
 def calcular_horas_uteis(mes, ano):
     feriados = holidays.Brazil(years=ano, prov='SP')
 

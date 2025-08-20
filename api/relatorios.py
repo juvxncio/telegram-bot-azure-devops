@@ -11,7 +11,9 @@ TEMPLATE_PADRAO = os.getenv('TEMPLATE_PADRAO')
 def gera_relatorio_tarefas(mes=None, ano=None):
     lista_projetos = azure.puxar_projetos()
     lista_todos_times = azure.puxar_times(lista_projetos)
-    projetos_times = azure.mesclar_projeto_com_time(lista_projetos, lista_todos_times)
+    projetos_times = azure.mesclar_projeto_com_time(
+        lista_projetos, lista_todos_times
+    )
 
     tarefas_por_pessoa = {}
     ids_por_pessoa = {}
@@ -34,7 +36,7 @@ def gera_relatorio_tarefas(mes=None, ano=None):
             state = fields.get('System.State')
 
             desc_limpa = re.sub(
-                r'Objetivo: Explicação clara da atividade .+ para conclusão\.',
+                rf'{TEMPLATE_PADRAO[:40]}.+{TEMPLATE_PADRAO[-15:]}',
                 '',
                 description,
             )
@@ -70,7 +72,9 @@ def gera_relatorio_tarefas(mes=None, ano=None):
 def gera_relatorio(mes=None, ano=None):
     lista_projetos = azure.puxar_projetos()
     lista_todos_times = azure.puxar_times(lista_projetos)
-    projetos_times = azure.mesclar_projeto_com_time(lista_projetos, lista_todos_times)
+    projetos_times = azure.mesclar_projeto_com_time(
+        lista_projetos, lista_todos_times
+    )
 
     total_por_pessoa = {}
     sprints = azure.busca_sprint(projetos_times, mes_alvo=mes, ano_alvo=ano)
