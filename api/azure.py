@@ -97,7 +97,7 @@ def busca_sprint(projetos_times, mes_alvo=None, ano_alvo=None):
     return sprints_mes
 
 
-def busca_work_items(projeto, time, sprint_id):
+def busca_id_work_items(projeto, time, sprint_id):
     url = f'{URL_BASE}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0'
     response = requests.get(url, auth=HTTPBasicAuth('', PAT))
     if response.status_code != 200:
@@ -144,17 +144,17 @@ def busca_horas_work_items(projeto, ids):
     return horas_por_pessoa
 
 
-def busca_tasks(projeto, ids):
-    tarefas = []
+def busca_campos_work_items(projeto, ids):
+    wi = []
     if ids:
         for i in range(0, len(ids), 200):
             ids_str = ','.join(ids[i : i + 200])
             url = (
                 f'{URL_BASE}{quote(projeto)}/_apis/wit/workitems'
-                f'?ids={ids_str}&fields=System.Id,System.Title,System.AssignedTo,System.State,System.Description,System.WorkItemType&api-version=7.0'
+                f'?ids={ids_str}&fields=System.Id,System.Title,System.AssignedTo,System.State,System.Description,Microsoft.VSTS.TCM.ReproSteps,System.WorkItemType&api-version=7.0'
             )
             r = requests.get(url, auth=HTTPBasicAuth('', PAT))
             if r.status_code == 200:
-                tarefas.extend(r.json().get('value', []))
+                wi.extend(r.json().get('value', []))
 
-    return tarefas
+    return wi
