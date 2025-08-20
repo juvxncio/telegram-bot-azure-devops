@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from dotenv import load_dotenv
 from api import relatorios
-from api.relatorios import gera_relatorio, gera_relatorio_tarefas
+from api.relatorios import gera_relatorio_horas, gera_relatorio_tarefas
 
 load_dotenv()
 GRUPO_PERMITIDO = int(os.getenv('GRUPO_PERMITIDO'))
@@ -30,7 +30,7 @@ async def horas(update: Update, context: ContextTypes.DEFAULT_TYPE):
             mes = hoje.month - 1 or 12
             ano = hoje.year if hoje.month > 1 else hoje.year - 1
 
-        relatorio = relatorios.gera_relatorio(mes=mes, ano=ano)
+        relatorio = relatorios.gera_relatorio_horas(mes=mes, ano=ano)
 
         if len(relatorio) > 4000:
             bio = BytesIO(relatorio.encode('utf-8'))

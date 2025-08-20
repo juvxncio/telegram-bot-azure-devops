@@ -69,7 +69,7 @@ def gera_relatorio_tarefas(mes=None, ano=None):
     return texto
 
 
-def gera_relatorio(mes=None, ano=None):
+def gera_relatorio_horas(mes=None, ano=None):
     lista_projetos = azure.puxar_projetos()
     lista_todos_times = azure.puxar_times(lista_projetos)
     projetos_times = azure.mesclar_projeto_com_time(
