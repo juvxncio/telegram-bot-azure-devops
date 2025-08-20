@@ -5,6 +5,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import api_azure
 from datetime import datetime
+from io import BytesIO
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -68,7 +69,13 @@ async def tarefas(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ano = hoje.year if hoje.month > 1 else hoje.year - 1
 
         relatorio = api_azure.gera_relatorio_tarefas(mes=mes, ano=ano)
-        await update.message.reply_text(relatorio)
+
+        if len(relatorio) > 4000:
+            bio = BytesIO(relatorio.encode('utf-8'))
+            bio.name = f"relatorio_tarefas_{mes}_{ano}.txt"
+            await update.message.reply_document(document=bio)
+        else:
+            await update.message.reply_text(relatorio)
 
     except Exception as e:
         await update.message.reply_text(
