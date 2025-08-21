@@ -81,7 +81,7 @@ def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
     mes_nome = format_date(data, 'LLLL/yyyy', locale='pt_BR')
 
     if not work_items_por_pessoa:
-        return f'✅ Nenhum(a) {tipo_solicitado} sem descrição encontrada em {mes_nome}.'
+        return f'✅ Nenhum(a) {tipo_solicitado} sem descrição encontrada em {mes_nome}.\n\n'
 
     texto = f'⚠️ {tipo_solicitado}(s) sem descrição em {mes_nome}:\n\n'
     for pessoa, qtd in sorted(
@@ -116,7 +116,7 @@ def gera_relatorio_horas(mes=None, ano=None):
     horas_uteis = calcular_horas_uteis(data.month, data.year)
 
     if not total_por_pessoa:
-        return f'Nenhuma hora registrada em {mes_nome}.'
+        return f'Nenhuma hora registrada em {mes_nome}.\n\n'
 
     texto = f'📊 Horas por profissional em {mes_nome}:\n\n'
     for pessoa, horas in sorted(
