@@ -17,6 +17,7 @@ def main():
     application = Application.builder().token(TELEGRAM_TOKEN).build()
     application.add_handler(CommandHandler('horas', handlers.horas))
     application.add_handler(CommandHandler('descricao', handlers.descricao))
+    application.add_handler(CommandHandler('completo', handlers.completo))
     application.add_handler(CommandHandler('id', handlers.id))
     print('Bot iniciado. Aguardando comandos...')
     application.run_polling()
