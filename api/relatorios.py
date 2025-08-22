@@ -8,21 +8,30 @@ import os
 TEMPLATE_PADRAO_TASK = os.getenv('TEMPLATE_PADRAO_TASK')
 TEMPLATE_PADRAO_BUG = os.getenv('TEMPLATE_PADRAO_BUG')
 TEMPLATE_PADRAO_PBI = os.getenv('TEMPLATE_PADRAO_PBI')
-
+TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE = os.getenv('TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE')
 
 def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
 
-    if tipo_solicitado.title() == 'História' or tipo_solicitado.title() == 'Historia':
+    checklist = []
+
+    if tipo_solicitado:
+        tipo_solicitado = tipo_solicitado.title()
+
+    if tipo_solicitado == 'História' or tipo_solicitado == 'Historia':
         tipo_solicitado = 'Product Backlog Item'
-        template_padrao = TEMPLATE_PADRAO_PBI
-    elif tipo_solicitado.title() == 'Bug':
-        tipo_solicitado = tipo_solicitado.title()
-        template_padrao = TEMPLATE_PADRAO_BUG
-    elif tipo_solicitado.title() == 'Task':
-        tipo_solicitado = tipo_solicitado.title()
-        template_padrao = TEMPLATE_PADRAO_TASK
+        checklist = [{'nome': 'Descrição', 'campo': 'System.Description', 'valor': '', 'template': TEMPLATE_PADRAO_PBI},
+                    {'nome': 'Critérios de Aceite', 'campo': 'Microsoft.VSTS.Common.AcceptanceCriteria', 'valor': '', 'template': TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE}]
+    elif tipo_solicitado == 'Bug':
+        checklist = [{'nome': 'Descrição', 'campo': 'Microsoft.VSTS.TCM.ReproSteps', 'valor': '', 'template': TEMPLATE_PADRAO_BUG}]
+    elif tipo_solicitado == 'Task':
+        checklist = [{'nome': 'Descrição', 'campo': 'System.Description', 'valor': '', 'template': TEMPLATE_PADRAO_TASK}]
     else:
         return f'❌ Tipo de work item "{tipo_solicitado}" inválido.'
+    
+    itens_a_checar = ""
+    for item in checklist:
+        itens_a_checar += item['nome'] + ', '
+    itens_a_checar = itens_a_checar[:-2]
 
     lista_projetos = azure.puxar_projetos()
     lista_todos_times = azure.puxar_times(lista_projetos)
@@ -43,15 +52,6 @@ def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
             fields = work_item.get('fields', {})
             tipo = fields.get('System.WorkItemType', '')
 
-            if tipo == 'Task' and tipo_solicitado == 'Task':
-                description = fields.get('System.Description', '')
-            elif tipo == 'Bug' and tipo_solicitado == 'Bug':
-                description = fields.get('Microsoft.VSTS.TCM.ReproSteps', '')
-            elif tipo == 'Product Backlog Item' and tipo_solicitado == 'Product Backlog Item':
-                description = fields.get('System.Description', '')
-            else:
-                continue
-
             assigned_to = fields.get('System.AssignedTo', {}).get(
                 'displayName', 'Sem responsável'
             )
@@ -59,23 +59,24 @@ def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
             title = fields.get('System.Title', '(sem título)')
             state = fields.get('System.State')
 
-            desc_limpa = re.sub(
-                rf'{template_padrao[:20]}.+{template_padrao[-15:]}\s*',
-                '',
-                description,
-            )
+            for item in checklist:
+                item['valor'] = re.sub(
+                    rf'{item['template'][:20]}.+{item['template'][-15:]}\s*',
+                    '',
+                    fields.get(item['campo'], ''),
+                )
 
-            if (
-                tipo == tipo_solicitado
-                and state == 'Done'
-                and (desc_limpa == '' or desc_limpa == template_padrao)
-            ):
-                work_items_por_pessoa[assigned_to] = (
-                    work_items_por_pessoa.get(assigned_to, 0) + 1
-                )
-                ids_por_pessoa.setdefault(assigned_to, []).append(
-                    f'#{wid} - {title}'
-                )
+                if (
+                  tipo == tipo_solicitado
+                  and state == 'Done'
+                    and (item['valor'] == '' or item['valor'] == item['template'])
+                ):
+                    work_items_por_pessoa[assigned_to] = (
+                        work_items_por_pessoa.get(assigned_to, 0) + 1
+                    )
+                    ids_por_pessoa.setdefault(assigned_to, []).append(
+                        f'#{wid} - {title} (sem {item['nome']})'
+                    )
 
     data = datetime(ano or datetime.now().year, mes or datetime.now().month, 1)
     mes_nome = format_date(data, 'LLLL/yyyy', locale='pt_BR')
@@ -83,7 +84,7 @@ def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
     if not work_items_por_pessoa:
         return f'✅ Nenhum(a) {tipo_solicitado} sem descrição encontrada em {mes_nome}.\n\n'
 
-    texto = f'⚠️ {tipo_solicitado}(s) sem descrição em {mes_nome}:\n\n'
+    texto = f'⚠️ {tipo_solicitado}(s) sem {itens_a_checar} em {mes_nome}:\n\n'
     for pessoa, qtd in sorted(
         work_items_por_pessoa.items(), key=lambda x: x[1], reverse=True
     ):
