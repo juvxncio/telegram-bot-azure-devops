@@ -7,7 +7,10 @@ Permite que uma equipe acompanhe a produtividade via comandos no Telegram.
 
 ## 🚀 Funcionalidades
 - `/horas [mês] [ano]` → Relatório de horas trabalhadas por pessoa no período.
-- `/tarefas [mês] [ano]` ou `/tasks` → Relatório de tarefas concluídas no período.
+- `/descricao task [mês] [ano]` → Relatório de tarefas concluídas no período sem descrição/com descrição padrão.
+- `/descricao bug [mês] [ano]` → Relatório de bugs concluídos no período sem descrição/com descrição padrão.
+- `/descricao historia [mês] [ano]` → Relatório de histórias concluídas no período sem descrição ou critérios de aceite/com descrição ou critérios de aceite padrão.
+- `/completo [mês] [ano]` → Junção dos quatro comandos anteriores em um só relatório.
 - `/id` → Mostra o seu ID de usuário e o Chat ID (útil para configurar permissões).
 - Relatórios grandes são enviados automaticamente como arquivo `.txt`.
 
@@ -78,7 +81,10 @@ URL_BASE=https://dev.azure.com/ORGANIZAÇÃO/
 lista_times_ignorados=LISTA_COM_TIMES_A_SEREM_IGNORADOS
 TELEGRAM_TOKEN=SEU_TOKEN_AQUI
 GRUPO_PERMITIDO=ID_DO_GRUPO_OU_USUARIO_TELEGRAM
-TEMPLATE_PADRAO=1
+TEMPLATE_PADRAO_TASK=1
+TEMPLATE_PADRAO_PBI=1
+TEMPLATE_PADRAO_BUG=1
+TEMPLATE_PADRAO_CRITERIO_DE_ACEITE=1
 ```
 
 > 🔑 O `GRUPO_PERMITIDO` é o chat ID onde os comandos podem ser executados.  
