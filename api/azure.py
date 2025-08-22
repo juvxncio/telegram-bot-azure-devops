@@ -151,7 +151,7 @@ def busca_campos_work_items(projeto, ids):
             ids_str = ','.join(ids[i : i + 200])
             url = (
                 f'{URL_BASE}{quote(projeto)}/_apis/wit/workitems'
-                f'?ids={ids_str}&fields=System.Id,System.Title,System.AssignedTo,System.State,System.Description,Microsoft.VSTS.TCM.ReproSteps,System.WorkItemType&api-version=7.0'
+                f'?ids={ids_str}&fields=System.Id,System.Title,System.AssignedTo,System.State,System.Description,Microsoft.VSTS.TCM.ReproSteps,Microsoft.VSTS.Common.AcceptanceCriteria,System.WorkItemType&api-version=7.0'
             )
             r = requests.get(url, auth=HTTPBasicAuth('', PAT))
             if r.status_code == 200:
