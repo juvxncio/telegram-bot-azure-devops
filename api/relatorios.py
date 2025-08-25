@@ -11,6 +11,7 @@ TEMPLATE_PADRAO_PBI = os.getenv('TEMPLATE_PADRAO_PBI')
 TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE = os.getenv(
     'TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE'
 )
+DOMINIO_AUTORIZADO_DONE = os.getenv('DOMINIO_AUTORIZADO_DONE')
 
 
 def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
@@ -169,3 +170,49 @@ def gera_relatorio_horas(mes=None, ano=None):
 
     texto += f'ℹ️ Horas úteis do mês: {horas_uteis}h\n'
     return texto
+
+
+def gera_relatorio_done(mes=None, ano=None):
+    lista_projetos = azure.puxar_projetos()
+    lista_todos_times = azure.puxar_times(lista_projetos)
+    projetos_times = azure.mesclar_projeto_com_time(
+        lista_projetos, lista_todos_times
+    )
+
+    data = datetime(ano or datetime.now().year, mes or datetime.now().month, 1)
+    mes_nome = format_date(data, 'LLLL/yyyy', locale='pt_BR')
+
+    dones_nao_autorizados = []
+    sprints = azure.busca_sprint(projetos_times, mes_alvo=mes, ano_alvo=ano)
+
+    for projeto, time, sprint_id in sprints:
+        ids = azure.busca_id_work_items(projeto, time, sprint_id)
+        wi = azure.busca_done_work_items(projeto, ids)
+
+        for work_item in wi:
+            fields = work_item.get('fields', {})
+            tipo = fields.get('System.WorkItemType', '')
+
+            wid = str(work_item['id'])
+            title = fields.get('System.Title', '(sem título)')
+            state = fields.get('System.State')
+            info_closed = fields.get('Microsoft.VSTS.Common.ClosedBy')
+            if info_closed:
+                autor_done = info_closed['uniqueName']
+
+            if (
+                state == 'Done'
+                and (tipo == 'Product Backlog Item' or tipo == 'Bug')
+                and not (autor_done.endswith(DOMINIO_AUTORIZADO_DONE))
+            ):
+                dones_nao_autorizados.append(
+                    f'#{wid} - {title} ({autor_done})\n\n'
+                )
+
+    if not dones_nao_autorizados:
+        return (
+            f'✅ Nenhuma História ou Bug com Done irregular em {mes_nome}.\n\n'
+        )
+    else:
+        texto = f'⚠️ Histórias/Bugs com Done irregular em {mes_nome}:\n\n'
+        return texto + ''.join(dones_nao_autorizados)
