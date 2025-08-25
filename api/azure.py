@@ -158,3 +158,19 @@ def busca_campos_work_items(projeto, ids):
                 wi.extend(r.json().get('value', []))
 
     return wi
+
+
+def busca_done_work_items(projeto, ids):
+    wi = []
+    if ids:
+        for i in range(0, len(ids), 200):
+            ids_str = ','.join(ids[i : i + 200])
+            url = (
+                f'{URL_BASE}{quote(projeto)}/_apis/wit/workitems'
+                f'?ids={ids_str}&fields=System.Id,System.Title,System.AssignedTo,System.State,Microsoft.VSTS.Common.ClosedBy,System.WorkItemType&api-version=7.0'
+            )
+            r = requests.get(url, auth=HTTPBasicAuth('', PAT))
+            if r.status_code == 200:
+                wi.extend(r.json().get('value', []))
+
+    return wi
