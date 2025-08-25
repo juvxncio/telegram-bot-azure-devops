@@ -69,7 +69,9 @@ async def descricao(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 '❌ Informar o tipo de Work Item (Task, História ou Bug)'
             )
 
-        relatorio = relatorios.gera_relatorio_descricao(tipo_solicitado=tipo, mes=mes, ano=ano)
+        relatorio = relatorios.gera_relatorio_descricao(
+            tipo_solicitado=tipo, mes=mes, ano=ano
+        )
 
         if len(relatorio) > 4000:
             bio = BytesIO(relatorio.encode('utf-8'))
@@ -103,12 +105,18 @@ async def completo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             mes = hoje.month - 1 or 12
             ano = hoje.year if hoje.month > 1 else hoje.year - 1
 
-        relatorio = ""
-        relatorio += relatorios.gera_relatorio_descricao(tipo_solicitado="História", mes=mes, ano=ano)
+        relatorio = ''
+        relatorio += relatorios.gera_relatorio_descricao(
+            tipo_solicitado='História', mes=mes, ano=ano
+        )
         relatorio += '\n\n'
-        relatorio += relatorios.gera_relatorio_descricao(tipo_solicitado="Bug", mes=mes, ano=ano)
+        relatorio += relatorios.gera_relatorio_descricao(
+            tipo_solicitado='Bug', mes=mes, ano=ano
+        )
         relatorio += '\n\n'
-        relatorio += relatorios.gera_relatorio_descricao(tipo_solicitado="Task", mes=mes, ano=ano)
+        relatorio += relatorios.gera_relatorio_descricao(
+            tipo_solicitado='Task', mes=mes, ano=ano
+        )
         relatorio += '\n\n'
         relatorio += relatorios.gera_relatorio_horas(mes=mes, ano=ano)
 
