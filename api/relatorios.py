@@ -8,7 +8,10 @@ import os
 TEMPLATE_PADRAO_TASK = os.getenv('TEMPLATE_PADRAO_TASK')
 TEMPLATE_PADRAO_BUG = os.getenv('TEMPLATE_PADRAO_BUG')
 TEMPLATE_PADRAO_PBI = os.getenv('TEMPLATE_PADRAO_PBI')
-TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE = os.getenv('TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE')
+TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE = os.getenv(
+    'TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE'
+)
+
 
 def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
 
@@ -19,16 +22,42 @@ def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
 
     if tipo_solicitado == 'História' or tipo_solicitado == 'Historia':
         tipo_solicitado = 'Product Backlog Item'
-        checklist = [{'nome': 'Descrição', 'campo': 'System.Description', 'valor': '', 'template': TEMPLATE_PADRAO_PBI},
-                    {'nome': 'Critérios de Aceite', 'campo': 'Microsoft.VSTS.Common.AcceptanceCriteria', 'valor': '', 'template': TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE}]
+        checklist = [
+            {
+                'nome': 'Descrição',
+                'campo': 'System.Description',
+                'valor': '',
+                'template': TEMPLATE_PADRAO_PBI,
+            },
+            {
+                'nome': 'Critérios de Aceite',
+                'campo': 'Microsoft.VSTS.Common.AcceptanceCriteria',
+                'valor': '',
+                'template': TEMPLATE_PADRAO_CRITERIOS_DE_ACEITE,
+            },
+        ]
     elif tipo_solicitado == 'Bug':
-        checklist = [{'nome': 'Descrição', 'campo': 'Microsoft.VSTS.TCM.ReproSteps', 'valor': '', 'template': TEMPLATE_PADRAO_BUG}]
+        checklist = [
+            {
+                'nome': 'Descrição',
+                'campo': 'Microsoft.VSTS.TCM.ReproSteps',
+                'valor': '',
+                'template': TEMPLATE_PADRAO_BUG,
+            }
+        ]
     elif tipo_solicitado == 'Task':
-        checklist = [{'nome': 'Descrição', 'campo': 'System.Description', 'valor': '', 'template': TEMPLATE_PADRAO_TASK}]
+        checklist = [
+            {
+                'nome': 'Descrição',
+                'campo': 'System.Description',
+                'valor': '',
+                'template': TEMPLATE_PADRAO_TASK,
+            }
+        ]
     else:
         return f'❌ Tipo de work item "{tipo_solicitado}" inválido.'
-    
-    itens_a_checar = ""
+
+    itens_a_checar = ''
     for item in checklist:
         itens_a_checar += item['nome'] + ', '
     itens_a_checar = itens_a_checar[:-2]
@@ -61,21 +90,24 @@ def gera_relatorio_descricao(tipo_solicitado=None, mes=None, ano=None):
 
             for item in checklist:
                 item['valor'] = re.sub(
-                    rf'{item['template'][:20]}.+{item['template'][-15:]}\s*',
+                    rf'{item["template"][:20]}.+{item["template"][-15:]}\s*',
                     '',
                     fields.get(item['campo'], ''),
                 )
 
                 if (
-                  tipo == tipo_solicitado
-                  and state == 'Done'
-                    and (item['valor'] == '' or item['valor'] == item['template'])
+                    tipo == tipo_solicitado
+                    and state == 'Done'
+                    and (
+                        item['valor'] == ''
+                        or item['valor'] == item['template']
+                    )
                 ):
                     work_items_por_pessoa[assigned_to] = (
                         work_items_por_pessoa.get(assigned_to, 0) + 1
                     )
                     ids_por_pessoa.setdefault(assigned_to, []).append(
-                        f'#{wid} - {title} (sem {item['nome']})'
+                        f'#{wid} - {title} (sem {item["nome"]})'
                     )
 
     data = datetime(ano or datetime.now().year, mes or datetime.now().month, 1)
