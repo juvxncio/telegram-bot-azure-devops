@@ -165,6 +165,35 @@ async def done(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f'❌ Erro ao gerar relatório: {str(e)}')
 
 
+async def transbordo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.chat.id != GRUPO_PERMITIDO:
+        await update.message.reply_text(
+            '❌ Este comando só pode ser usado no grupo autorizado.'
+        )
+        return
+
+    try:
+        if len(context.args) >= 2:
+            mes = int(context.args[0])
+            ano = int(context.args[1])
+        else:
+            await update.message.reply_text(
+                '❌ Informar o mês e ano de início.'
+            )
+
+        relatorio = relatorios.gera_relatorio_transbordo(mes_inicio=mes, ano_inicio=ano)
+
+        if len(relatorio) > 4000:
+            bio = BytesIO(relatorio.encode('utf-8'))
+            bio.name = f'relatorio_transbordo_{mes}_{ano}.txt'
+            await update.message.reply_document(document=bio)
+        else:
+            await update.message.reply_text(relatorio)
+
+    except Exception as e:
+        await update.message.reply_text(f'❌ Erro ao gerar relatório: {str(e)}')
+
+
 async def id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f'Seu ID: {update.effective_user.id}\nChat ID: {update.effective_chat.id}'
