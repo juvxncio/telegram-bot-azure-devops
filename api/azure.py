@@ -97,6 +97,35 @@ def busca_sprint(projetos_times, mes_alvo=None, ano_alvo=None):
     return sprints_mes
 
 
+def busca_sprints(projetos_times, mes_alvo=None, ano_alvo=None):
+    from datetime import datetime
+
+    mes_inicial = mes_alvo or datetime.now().month
+    ano_inicial = ano_alvo or datetime.now().year
+    sprints_meses = []
+
+    for projeto, time in projetos_times:
+        url = f'{URL_BASE}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations?api-version=7.0'
+        response = requests.get(url, auth=HTTPBasicAuth('', PAT))
+        if response.status_code != 200:
+            continue
+
+        sprints = response.json()['value']
+        for sprint in sprints:
+            start_raw = sprint['attributes'].get('startDate')
+            finish_raw = sprint['attributes'].get('finishDate')
+
+            if not start_raw or not finish_raw:
+                continue
+
+            inicio = datetime.fromisoformat(start_raw.replace('Z', '+00:00'))
+
+            if inicio.month >= mes_inicial and inicio.year >= ano_inicial:
+                sprints_meses.append((projeto, time, sprint['id']))
+
+    return sprints_meses
+
+
 def busca_id_work_items(projeto, time, sprint_id):
     url = f'{URL_BASE}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0'
     response = requests.get(url, auth=HTTPBasicAuth('', PAT))
