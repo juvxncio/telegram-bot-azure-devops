@@ -216,3 +216,45 @@ def gera_relatorio_done(mes=None, ano=None):
     else:
         texto = f'⚠️ Histórias/Bugs com Done irregular em {mes_nome}:\n\n'
         return texto + ''.join(dones_nao_autorizados)
+
+
+def gera_relatorio_transbordo(mes_inicio=None, ano_inicio=None):
+    lista_projetos = azure.puxar_projetos()
+    lista_todos_times = azure.puxar_times(lista_projetos)
+    projetos_times = azure.mesclar_projeto_com_time(
+        lista_projetos, lista_todos_times
+    )
+    lista_tudo = []
+    historias_transbordadas = []
+
+    data = datetime(ano_inicio or datetime.now().year, mes_inicio or datetime.now().month, 1)
+    mes_nome = format_date(data, 'LLLL/yyyy', locale='pt_BR')
+
+    sprints = azure.busca_sprints(projetos_times, mes_alvo=mes_inicio, ano_alvo=ano_inicio)
+
+    for projeto, time, sprint_id in sprints:
+        ids = azure.busca_id_work_items(projeto, time, sprint_id)
+        wi = azure.busca_done_work_items(projeto, ids)
+
+        for work_item in wi:
+            fields = work_item.get('fields', {})
+            tipo = fields.get('System.WorkItemType', '')
+
+            wid = str(work_item['id'])
+            title = fields.get('System.Title', '(sem título)')
+
+            if tipo == 'Product Backlog Item':
+                if wid in lista_tudo:
+                    historias_transbordadas.append(
+                        f'#{wid} - {title}\n\n'
+                    )
+                else:
+                    lista_tudo.append(wid)
+
+    if not historias_transbordadas:
+        return (
+            f'✅ Nenhuma história transbordada a partir de {mes_nome}.\n\n'
+        )
+    else:
+        texto = f'⚠️ Histórias com transbordo em {mes_nome}:\n\n'
+        return texto + ''.join(historias_transbordadas)
