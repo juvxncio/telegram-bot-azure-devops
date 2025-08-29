@@ -1,7 +1,7 @@
 import os
 import logging
 from dotenv import load_dotenv
-from telegram.ext import Application, CommandHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from bot import handlers
 
 load_dotenv()
@@ -15,6 +15,7 @@ logging.basicConfig(
 
 def main():
     application = Application.builder().token(TELEGRAM_TOKEN).build()
+    application.add_handler(CommandHandler('start', handlers.start))
     application.add_handler(CommandHandler('horas', handlers.horas))
     application.add_handler(CommandHandler('descricao', handlers.descricao))
     application.add_handler(CommandHandler('completo', handlers.completo))
@@ -22,6 +23,7 @@ def main():
     application.add_handler(CommandHandler('transbordo', handlers.transbordo))
     application.add_handler(CommandHandler('id', handlers.id))
     application.add_handler(CommandHandler('help', handlers.help))
+    application.add_handler(CallbackQueryHandler(handlers.button_handler))
     print('Bot iniciado. Aguardando comandos...')
     application.run_polling()
 
