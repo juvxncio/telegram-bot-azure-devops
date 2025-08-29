@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
 from io import BytesIO
-from telegram import Update
-from telegram.ext import ContextTypes
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes, CallbackQueryHandler
 from dotenv import load_dotenv
 from api import relatorios
 from api.relatorios import (
@@ -11,9 +11,135 @@ from api.relatorios import (
     gera_relatorio_done,
 )
 import re
+import datetime
 
 load_dotenv()
 GRUPO_PERMITIDO = int(os.getenv('GRUPO_PERMITIDO'))
+
+COMMANDS = {
+    '/horas': '⌚️ Relatório de horas trabalhadas',
+    '/descricao task': '✍️📖 Tarefas sem descrição',
+    '/descricao bug': '✍️🐞 Bugs sem descrição',
+    '/descricao historia': '✍️📔 Histórias sem descrição',
+    '/done': '✅ Histórias com Done dado por não autorizados',
+    '/completo': '📚 Relatório completo',
+    '/transbordo': '🌊 Histórias movidas de sprint',
+}
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton(f'{desc}', callback_data=f'cmd:{cmd}')]
+        for cmd, desc in COMMANDS.items()
+    ]
+    keyboard.append(
+        [InlineKeyboardButton('❌ Cancelar', callback_data='cancel')]
+    )
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        '📌 Escolha um relatório:', reply_markup=reply_markup
+    )
+
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+
+    if data == 'cancel':
+        try:
+            await query.message.delete()
+        except:
+            await query.edit_message_text('❌ Operação cancelada.')
+        return
+
+    if data.startswith('cmd:'):
+        cmd = data.split(':', 1)[1]
+        keyboard = [
+            [InlineKeyboardButton(str(m), callback_data=f'mes:{cmd}:{m}')]
+            for m in range(1, 13)
+        ]
+        keyboard.append(
+            [InlineKeyboardButton('❌ Cancelar', callback_data='cancel')]
+        )
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            f'📌 Você escolheu {cmd}. Agora selecione o mês:',
+            reply_markup=reply_markup,
+        )
+
+    elif data.startswith('mes:'):
+        _, cmd, mes = data.split(':')
+        mes = int(mes)
+        ano_atual = datetime.datetime.now().year
+        anos = list(range(2024, ano_atual + 1))
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    str(a), callback_data=f'ano:{cmd}:{mes}:{a}'
+                )
+            ]
+            for a in anos
+        ]
+        keyboard.append(
+            [InlineKeyboardButton('❌ Cancelar', callback_data='cancel')]
+        )
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            f'📌 Você escolheu {cmd} mês {mes}. Agora selecione o ano:',
+            reply_markup=reply_markup,
+        )
+
+    elif data.startswith('ano:'):
+        _, cmd, mes, ano = data.split(':')
+        mes, ano = int(mes), int(ano)
+
+        await query.edit_message_text('⏳ Gerando relatório, aguarde...')
+
+        # Gera o relatório
+        if cmd == '/horas':
+            relatorio = relatorios.gera_relatorio_horas(mes=mes, ano=ano)
+        elif cmd.startswith('/descricao'):
+            tipo = cmd.split()[1]
+            relatorio = relatorios.gera_relatorio_descricao(
+                tipo_solicitado=tipo, mes=mes, ano=ano
+            )
+        elif cmd == '/done':
+            relatorio = relatorios.gera_relatorio_done(mes=mes, ano=ano)
+        elif cmd == '/completo':
+            relatorio = (
+                relatorios.gera_relatorio_descricao(
+                    tipo_solicitado='História', mes=mes, ano=ano
+                )
+                + '\n\n'
+                + relatorios.gera_relatorio_descricao(
+                    tipo_solicitado='Bug', mes=mes, ano=ano
+                )
+                + '\n\n'
+                + relatorios.gera_relatorio_descricao(
+                    tipo_solicitado='Task', mes=mes, ano=ano
+                )
+                + '\n\n'
+                + relatorios.gera_relatorio_done(mes=mes, ano=ano)
+                + '\n\n'
+                + relatorios.gera_relatorio_horas(mes=mes, ano=ano)
+            )
+        elif cmd == '/transbordo':
+            relatorio = relatorios.gera_relatorio_transbordo(
+                mes_inicio=mes, ano_inicio=ano
+            )
+        else:
+            relatorio = '❌ Comando não reconhecido.'
+
+        if len(relatorio) > 4000:
+            from io import BytesIO
+
+            bio = BytesIO(relatorio.encode('utf-8'))
+            bio.name = f"relatorio_{cmd.strip('/')}_{mes}_{ano}.txt"
+            await query.message.reply_document(document=bio)
+        else:
+            await query.message.reply_text(relatorio)
 
 
 async def horas(update: Update, context: ContextTypes.DEFAULT_TYPE):
