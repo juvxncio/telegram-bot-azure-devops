@@ -21,6 +21,7 @@ def main():
     application.add_handler(CommandHandler('done', handlers.done))
     application.add_handler(CommandHandler('transbordo', handlers.transbordo))
     application.add_handler(CommandHandler('id', handlers.id))
+    application.add_handler(CommandHandler('help', handlers.help))
     print('Bot iniciado. Aguardando comandos...')
     application.run_polling()
 
