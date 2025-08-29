@@ -227,10 +227,16 @@ def gera_relatorio_transbordo(mes_inicio=None, ano_inicio=None):
     lista_tudo = []
     historias_transbordadas = []
 
-    data = datetime(ano_inicio or datetime.now().year, mes_inicio or datetime.now().month, 1)
+    data = datetime(
+        ano_inicio or datetime.now().year,
+        mes_inicio or datetime.now().month,
+        1,
+    )
     mes_nome = format_date(data, 'LLLL/yyyy', locale='pt_BR')
 
-    sprints = azure.busca_sprints(projetos_times, mes_alvo=mes_inicio, ano_alvo=ano_inicio)
+    sprints = azure.busca_sprints(
+        projetos_times, mes_alvo=mes_inicio, ano_alvo=ano_inicio
+    )
 
     for projeto, time, sprint_id in sprints:
         ids = azure.busca_id_work_items(projeto, time, sprint_id)
@@ -245,16 +251,12 @@ def gera_relatorio_transbordo(mes_inicio=None, ano_inicio=None):
 
             if tipo == 'Product Backlog Item':
                 if wid in lista_tudo:
-                    historias_transbordadas.append(
-                        f'#{wid} - {title}\n\n'
-                    )
+                    historias_transbordadas.append(f'#{wid} - {title}\n\n')
                 else:
                     lista_tudo.append(wid)
 
     if not historias_transbordadas:
-        return (
-            f'✅ Nenhuma história transbordada a partir de {mes_nome}.\n\n'
-        )
+        return f'✅ Nenhuma história transbordada a partir de {mes_nome}.\n\n'
     else:
         texto = f'⚠️ Histórias com transbordo em {mes_nome}:\n\n'
         return texto + ''.join(historias_transbordadas)

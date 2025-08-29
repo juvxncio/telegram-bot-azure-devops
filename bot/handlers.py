@@ -5,7 +5,11 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from dotenv import load_dotenv
 from api import relatorios
-from api.relatorios import gera_relatorio_horas, gera_relatorio_descricao
+from api.relatorios import (
+    gera_relatorio_horas,
+    gera_relatorio_descricao,
+    gera_relatorio_done,
+)
 import re
 
 load_dotenv()
@@ -119,6 +123,8 @@ async def completo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             tipo_solicitado='Task', mes=mes, ano=ano
         )
         relatorio += '\n\n'
+        relatorio += relatorios.gera_relatorio_done(mes=mes, ano=ano)
+        relatorio += '\n\n'
         relatorio += relatorios.gera_relatorio_horas(mes=mes, ano=ano)
 
         if len(relatorio) > 4000:
@@ -182,7 +188,9 @@ async def transbordo(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 '❌ Informar o mês e ano de início.'
             )
 
-        relatorio = relatorios.gera_relatorio_transbordo(mes_inicio=mes, ano_inicio=ano)
+        relatorio = relatorios.gera_relatorio_transbordo(
+            mes_inicio=mes, ano_inicio=ano
+        )
 
         if len(relatorio) > 4000:
             bio = BytesIO(relatorio.encode('utf-8'))
@@ -200,22 +208,22 @@ async def id(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f'Seu ID: {update.effective_user.id}\nChat ID: {update.effective_chat.id}'
     )
 
+
 def extrair_comandos_readme() -> str:
-    with open("README.md", "r", encoding="utf-8") as f:
+    with open('README.md', 'r', encoding='utf-8') as f:
         conteudo = f.read()
 
-    # Pegar apenas a seção "Funcionalidades"
-    match = re.search(r"## 🚀 Funcionalidades(.*?)---", conteudo, re.S)
+    match = re.search(r'## 🚀 Funcionalidades(.*?)---', conteudo, re.S)
     if not match:
-        return "Erro ao carregar comandos."
+        return 'Erro ao carregar comandos.'
 
     texto = match.group(1).strip()
 
-    # Converter Markdown do README para HTML do Telegram
-    texto = texto.replace("**", "<b>").replace("**", "</b>", 1)  # opcional
-    texto = re.sub(r"`(/.*?)`", r"<code>\1</code>", texto)      # comandos entre crase
-    return f"<b>Comandos:</b>\n{texto}"
+    texto = texto.replace('**', '<b>').replace('**', '</b>', 1)
+    texto = re.sub(r'`(/.*?)`', r'<code>\1</code>', texto)
+    return f'<b>Comandos:</b>\n{texto}'
+
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     comandos = extrair_comandos_readme()
-    await update.message.reply_text(comandos, parse_mode="HTML")
+    await update.message.reply_text(comandos, parse_mode='HTML')
