@@ -198,3 +198,19 @@ async def id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f'Seu ID: {update.effective_user.id}\nChat ID: {update.effective_chat.id}'
     )
+
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        """<b>Comandos:</b>
+⌚ <code>/horas [mês] [ano]</code> → Relatório de horas trabalhadas por pessoa no período.
+✍️📖 <code>/descricao task [mês] [ano]</code> → Relatório de tarefas concluídas no período sem descrição/com descrição padrão.
+✍️🐞 <code>/descricao bug [mês] [ano]</code> → Relatório de bugs concluídos no período sem descrição/com descrição padrão.
+✍️📔 <code>/descricao historia [mês] [ano]</code> → Relatório de histórias concluídas no período sem descrição ou critérios de aceite/com descrição ou critérios de aceite padrão.
+✅ <code>/done [mês] [ano]</code> → Relatório de histórias cujo status Done tenha sido feito por alguém não autorizado.
+🌊 <code>/transbordo [mês] [ano]</code> → Relatório de histórias que foram movidas de sprint.
+📚 <code>/completo [mês] [ano]</code> → Junção dos comandos anteriores em um só relatório.
+ℹ️ <code>/id</code> → Mostra o seu ID de usuário e o Chat ID (útil para configurar permissões).\n
+‼️ <u>Relatórios grandes são enviados automaticamente como arquivo .txt</u> ‼️
+""",
+        parse_mode="HTML"
+    )

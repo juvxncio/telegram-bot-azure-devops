@@ -11,8 +11,8 @@ Permite que uma equipe acompanhe a produtividade via comandos no Telegram.
 - `/descricao bug [mês] [ano]` → Relatório de bugs concluídos no período sem descrição/com descrição padrão.
 - `/descricao historia [mês] [ano]` → Relatório de histórias concluídas no período sem descrição ou critérios de aceite/com descrição ou critérios de aceite padrão.
 - `/done [mês] [ano]` → Relatório de histórias cujo status Done tenha sido feito por alguém não autorizado.
-- `/transbordo [mês] [ano]` → Relatório de histórias que foram movidas de sprint.
 - `/completo [mês] [ano]` → Junção dos comandos anteriores em um só relatório.
+- `/transbordo [mês] [ano]` → Relatório de histórias que foram movidas de sprint.
 - `/id` → Mostra o seu ID de usuário e o Chat ID (útil para configurar permissões).
 - Relatórios grandes são enviados automaticamente como arquivo `.txt`.
 
