@@ -6,6 +6,7 @@ Permite que uma equipe acompanhe a produtividade via comandos no Telegram.
 ---
 
 ## 🚀 Funcionalidades
+- `/start` → Menu com opções dos comandos abaixo.
 - `/horas [mês] [ano]` → Relatório de horas trabalhadas por pessoa no período.
 - `/descricao task [mês] [ano]` → Relatório de tarefas concluídas no período sem descrição/com descrição padrão.
 - `/descricao bug [mês] [ano]` → Relatório de bugs concluídos no período sem descrição/com descrição padrão.
