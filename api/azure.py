@@ -32,7 +32,7 @@ class AzureDevOpsAPI:
             if r.status_code == 200:
                 return r.json()
             return None
-        except requests.RequestException as e:
+        except requests.RequestException:
             return None
 
     def puxar_projetos(self):
@@ -48,7 +48,6 @@ class AzureDevOpsAPI:
 
     def puxar_times(self, lista_projetos):
         lista_todos_times = []
-
         for projeto in lista_projetos:
             url = f'{self.url_base}_apis/projects/{projeto}/teams?api-version=7.0'
             data = self._get(url)
@@ -84,7 +83,13 @@ class AzureDevOpsAPI:
                 time_index += 1
         return projetos_times
 
-    def _filtra_sprints(self, projetos_times, mes_inicio=None, ano_inicio=None, tipo_filtro='igual'):
+    def _filtra_sprints(
+        self,
+        projetos_times,
+        mes_inicio=None,
+        ano_inicio=None,
+        tipo_filtro='igual',
+    ):
         mes_atual = mes_inicio or datetime.now().month
         ano_atual = ano_inicio or datetime.now().year
 
@@ -99,84 +104,60 @@ class AzureDevOpsAPI:
             for sprint in data.get('value', []):
                 start_raw = sprint['attributes'].get('startDate')
                 finish_raw = sprint['attributes'].get('finishDate')
-
                 if not start_raw or not finish_raw:
                     continue
-                
-                inicio = datetime.fromisoformat(start_raw.replace('Z', '+00:00'))
+
+                inicio = datetime.fromisoformat(
+                    start_raw.replace('Z', '+00:00')
+                )
 
                 if tipo_filtro == 'igual':
-                    if inicio.month == mes_inicio and inicio.year == ano_inicio:
+                    if inicio.month == mes_atual and inicio.year == ano_atual:
                         sprints_filtradas.append((projeto, time, sprint['id']))
                 elif tipo_filtro == 'a_partir':
-                    if (inicio.year > ano_inicio) or (inicio.year == ano_inicio and inicio.month >= mes_inicio):
+                    if (inicio.year > ano_atual) or (
+                        inicio.year == ano_atual and inicio.month >= mes_atual
+                    ):
                         sprints_filtradas.append((projeto, time, sprint['id']))
 
         return sprints_filtradas
 
     def busca_sprint(self, projetos_times, mes_alvo=None, ano_alvo=None):
-        return self._filtra_sprints(projetos_times, mes_alvo, ano_alvo, tipo_filtro='igual')
+        return self._filtra_sprints(
+            projetos_times, mes_alvo, ano_alvo, tipo_filtro='igual'
+        )
 
     def busca_sprints(self, projetos_times, mes_alvo=None, ano_alvo=None):
-        return self._filtra_sprints(projetos_times, mes_alvo, ano_alvo, tipo_filtro='a_partir')
+        return self._filtra_sprints(
+            projetos_times, mes_alvo, ano_alvo, tipo_filtro='a_partir'
+        )
 
     def busca_id_work_items(self, projeto, time, sprint_id):
         url = f'{self.url_base}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0'
         data = self._get(url)
         if not data:
             return []
-
         items_data = data.get('workItemRelations', [])
-        return [str(item['target']['id']) for item in items_data if 'target' in item]
+        return [
+            str(item['target']['id'])
+            for item in items_data
+            if 'target' in item
+        ]
 
     @staticmethod
     def _chunk_list(lst, size):
         for i in range(0, len(lst), size):
-            yield lst[i:i+size]
+            yield lst[i : i + size]
 
-    def busca_horas_work_items(self, projeto, ids):
-        horas_por_pessoa = {}
-        if not ids:
-            return horas_por_pessoa
-
-        for chunk in self._chunk_list(ids, 200):
-            ids_str = ','.join(chunk)
-            url = (
-                f'{self.url_base}{quote(projeto)}/_apis/wit/workitems'
-                f'?ids={ids_str}&fields=System.Title,System.AssignedTo,Microsoft.VSTS.Scheduling.CompletedWork&api-version=7.0'
-            )
-            data = self._get(url)
-            if not data:
-                continue
-
-            for work_item in data.get('value', []):
-                assigned_to = (
-                    work_item['fields']
-                    .get('System.AssignedTo', {})
-                    .get('displayName', 'Sem responsável')
-                )
-                horas = work_item['fields'].get(
-                    'Microsoft.VSTS.Scheduling.CompletedWork', 0
-                )
-                horas_por_pessoa[assigned_to] = (
-                    horas_por_pessoa.get(assigned_to, 0) + horas
-                )
-
-        return horas_por_pessoa
-
-    def _busca_work_items(self, projeto, ids, fields):
+    def _busca_work_items_por_chunks(self, projeto, ids, fields):
         work_items = []
         if not ids:
             return work_items
 
         fields_str = ','.join(fields)
-
         for chunk in self._chunk_list(ids, 200):
             ids_str = ','.join(chunk)
-            url = (
-                f'{self.url_base}{quote(projeto)}/_apis/wit/workitems'
-                f'?ids={ids_str}&fields={fields_str}&api-version=7.0'
-            )
+            url = f'{self.url_base}{quote(projeto)}/_apis/wit/workitems?ids={ids_str}&fields={fields_str}&api-version=7.0'
             data = self._get(url)
             if not data:
                 continue
@@ -184,27 +165,52 @@ class AzureDevOpsAPI:
 
         return work_items
 
+    def busca_horas_work_items(self, projeto, ids):
+        horas_por_pessoa = {}
+        if not ids:
+            return horas_por_pessoa
+
+        fields = [
+            'System.AssignedTo',
+            'Microsoft.VSTS.Scheduling.CompletedWork',
+        ]
+        work_items = self._busca_work_items_por_chunks(projeto, ids, fields)
+
+        for wi in work_items:
+            assigned_to = (
+                wi['fields']
+                .get('System.AssignedTo', {})
+                .get('displayName', 'Sem responsável')
+            )
+            horas = wi['fields'].get(
+                'Microsoft.VSTS.Scheduling.CompletedWork', 0
+            )
+            horas_por_pessoa[assigned_to] = (
+                horas_por_pessoa.get(assigned_to, 0) + horas
+            )
+
+        return horas_por_pessoa
+
     def busca_campos_work_items(self, projeto, ids):
         fields = [
-            "System.Id",
-            "System.Title",
-            "System.AssignedTo",
-            "System.State",
-            "System.Description",
-            "Microsoft.VSTS.TCM.ReproSteps",
-            "Microsoft.VSTS.Common.AcceptanceCriteria",
-            "System.WorkItemType",
+            'System.Id',
+            'System.Title',
+            'System.AssignedTo',
+            'System.State',
+            'System.Description',
+            'Microsoft.VSTS.TCM.ReproSteps',
+            'Microsoft.VSTS.Common.AcceptanceCriteria',
+            'System.WorkItemType',
         ]
-        return self._busca_work_items(projeto, ids, fields)
-
+        return self._busca_work_items_por_chunks(projeto, ids, fields)
 
     def busca_done_work_items(self, projeto, ids):
         fields = [
-            "System.Id",
-            "System.Title",
-            "System.AssignedTo",
-            "System.State",
-            "Microsoft.VSTS.Common.ClosedBy",
-            "System.WorkItemType",
+            'System.Id',
+            'System.Title',
+            'System.AssignedTo',
+            'System.State',
+            'System.WorkItemType',
+            'Microsoft.VSTS.Common.ClosedBy',
         ]
-        return self._busca_work_items(projeto, ids, fields)
+        return self._busca_work_items_por_chunks(projeto, ids, fields)
