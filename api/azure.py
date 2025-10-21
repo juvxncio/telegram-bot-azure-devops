@@ -218,36 +218,3 @@ class AzureDevOpsAPI:
             'Microsoft.VSTS.Common.ClosedBy',
         ]
         return self._busca_work_items_por_chunks(projeto, ids, fields)
-
-if __name__ == "__main__":
-    api = AzureDevOpsAPI()
-
-    print("=== TESTE: Projetos ===")
-    projetos = api.puxar_projetos()
-    print(projetos)
-
-    if projetos:
-        print("\n=== TESTE: Times ===")
-        times = api.puxar_times(projetos)
-        print(times)
-
-        print("\n=== TESTE: Mesclagem ===")
-        projetos_times = api.mesclar_projeto_com_time(projetos, times)
-        print(projetos_times)
-
-        print("\n=== TESTE: Sprints ===")
-        sprints = api.busca_sprint(projetos_times)
-        print(sprints)
-
-        if sprints:
-            print("\n=== TESTE: Work Items ===")
-            projeto, time, sprint_id = sprints[0]
-            ids = api.busca_id_work_items(projeto, time, sprint_id)
-            print(f"IDs encontrados: {ids}")
-
-            if ids:
-                print("\n=== TESTE: Horas por pessoa ===")
-                horas = api.busca_horas_work_items(projeto, ids)
-                print(horas)
-    else:
-        print("Nenhum projeto retornado. Verifique se as variáveis de ambiente estão certas.")
