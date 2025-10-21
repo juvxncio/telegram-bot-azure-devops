@@ -58,30 +58,34 @@ class AzureDevOpsAPI:
         return lista_todos_times
 
     def mesclar_projeto_com_time(self, lista_projetos, lista_todos_times):
-        lista_times_ativos = []
-        projetos_times = []
-        time_index = 0
+        lista_times_ativos = [
+            t for t in lista_todos_times
+            if not any(palavra in t for palavra in self.lista_times_ignorados)
+        ]
 
-        for time in lista_todos_times:
-            if not any(
-                palavra in time for palavra in self.lista_times_ignorados
-            ):
-                lista_times_ativos.append(time)
+        projetos_times = []
+        usados = set()
 
         for projeto in lista_projetos:
-            if time_index >= len(lista_times_ativos):
-                break
-            projetos_times.append((projeto, lista_times_ativos[time_index]))
-            time_index += 1
+            times_relacionados = [
+                t for t in lista_times_ativos
+                if projeto.split(' - ')[0].lower() in t.lower() or projeto.lower() in t.lower()
+            ]
 
-            if (
-                projeto.startswith('CODAE') or projeto.startswith('COPED')
-            ) and time_index < len(lista_times_ativos):
-                projetos_times.append(
-                    (projeto, lista_times_ativos[time_index])
-                )
-                time_index += 1
+            if times_relacionados:
+                for t in times_relacionados:
+                    if t not in usados:
+                        projetos_times.append((projeto, t))
+                        usados.add(t)
+            else:
+                for t in lista_times_ativos:
+                    if t not in usados:
+                        projetos_times.append((projeto, t))
+                        usados.add(t)
+                        break
+
         return projetos_times
+
 
     def _filtra_sprints(
         self,
