@@ -65,10 +65,7 @@ class Relatorios:
         itens_a_checar = ', '.join([item['nome'] for item in checklist])
 
         lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+        projetos_times = self.api.puxar_times(lista_projetos)
 
         work_items_por_pessoa = {}
         ids_por_pessoa = {}
@@ -132,10 +129,7 @@ class Relatorios:
 
     def gera_relatorio_horas(self, mes=None, ano=None):
         lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+        projetos_times = self.api.puxar_times(lista_projetos)
 
         total_por_pessoa = {}
         sprints = self.api.busca_sprint(
@@ -184,10 +178,7 @@ class Relatorios:
 
     def gera_relatorio_done(self, mes=None, ano=None):
         lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+        projetos_times = self.api.puxar_times(lista_projetos)
 
         data = datetime(
             ano or datetime.now().year, mes or datetime.now().month, 1
@@ -229,10 +220,7 @@ class Relatorios:
 
     def gera_relatorio_transbordo(self, mes_inicio=None, ano_inicio=None):
         lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+        projetos_times = self.api.puxar_times(lista_projetos)
 
         lista_tudo = []
         historias_transbordadas = []

@@ -54,38 +54,11 @@ class AzureDevOpsAPI:
             if not data:
                 continue
             for time in data.get('value', []):
-                lista_todos_times.append(time['name'])
+                if not any(
+                    palavra in time['name'] for palavra in self.lista_times_ignorados
+                ):
+                    lista_todos_times.append((projeto, time['name']))
         return lista_todos_times
-
-    def mesclar_projeto_com_time(self, lista_projetos, lista_todos_times):
-        lista_times_ativos = [
-            t for t in lista_todos_times
-            if not any(palavra in t for palavra in self.lista_times_ignorados)
-        ]
-
-        projetos_times = []
-        usados = set()
-
-        for projeto in lista_projetos:
-            times_relacionados = [
-                t for t in lista_times_ativos
-                if projeto.split(' - ')[0].lower() in t.lower() or projeto.lower() in t.lower()
-            ]
-
-            if times_relacionados:
-                for t in times_relacionados:
-                    if t not in usados:
-                        projetos_times.append((projeto, t))
-                        usados.add(t)
-            else:
-                for t in lista_times_ativos:
-                    if t not in usados:
-                        projetos_times.append((projeto, t))
-                        usados.add(t)
-                        break
-
-        return projetos_times
-
 
     def _filtra_sprints(
         self,
