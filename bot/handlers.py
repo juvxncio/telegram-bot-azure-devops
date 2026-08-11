@@ -70,7 +70,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == 'cancel':
         try:
             await query.message.delete()
-        except:
+        except Exception:
             await query.edit_message_text('❌ Operação cancelada.')
         return
 
