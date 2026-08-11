@@ -82,11 +82,7 @@ class AzureDevOpsAPI:
                         projetos_times.append((projeto, t))
                         usados.add(t)
             else:
-                for t in lista_times_ativos:
-                    if t not in usados:
-                        projetos_times.append((projeto, t))
-                        usados.add(t)
-                        break
+                print(f"⚠️ Nenhum time correspondente encontrado para o projeto '{projeto}' — ignorado.")
 
         return projetos_times
 
