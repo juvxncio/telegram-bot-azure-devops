@@ -18,7 +18,7 @@ def main():
     application = Application.builder().token(TELEGRAM_TOKEN).build()
     application.add_handler(CommandHandler('start', handlers.start))
     application.add_handler(CommandHandler('help', handlers.ajuda))
-    application.add_handler(CommandHandler('id', handlers.id))
+    application.add_handler(CommandHandler('id', handlers.meu_id))
     application.add_handler(CommandHandler('horas', handlers.horas))
     application.add_handler(CommandHandler('descricao', handlers.descricao))
     application.add_handler(CommandHandler('completo', handlers.completo))

@@ -263,7 +263,7 @@ async def transbordo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await enviar_relatorio(update, texto, 'transbordo', mes, ano)
 
 
-async def id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def meu_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f'Seu ID: {update.effective_user.id}\nChat ID: {update.effective_chat.id}'
     )
