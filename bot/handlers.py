@@ -1,4 +1,5 @@
 import os
+import re
 from io import BytesIO
 from datetime import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -59,9 +60,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         '📌 Escolha um relatório:', reply_markup=reply_markup
     )
-
-
-import re
 
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
