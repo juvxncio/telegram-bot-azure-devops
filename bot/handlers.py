@@ -48,7 +48,16 @@ async def enviar_relatorio(message, texto, prefixo, mes, ano):
         await message.reply_text(texto)
 
 
+def chat_autorizado(chat_id) -> bool:
+    return chat_id == GRUPO_PERMITIDO
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not chat_autorizado(update.effective_chat.id):
+        await update.message.reply_text(
+            '❌ Este comando só pode ser usado no grupo autorizado.'
+        )
+        return
     keyboard = [
         [InlineKeyboardButton(desc, callback_data=f'cmd:{cmd}')]
         for cmd, desc in COMMANDS.items()
@@ -65,6 +74,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+
+    if not chat_autorizado(update.effective_chat.id):
+        await query.edit_message_text(
+            '❌ Este comando só pode ser usado no grupo autorizado.'
+        )
+        return
+
     data = query.data
 
     if data == 'cancel':
@@ -186,7 +202,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def horas(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.chat.id != GRUPO_PERMITIDO:
+    if not chat_autorizado(update.message.chat.id):
         await update.message.reply_text(
             '❌ Este comando só pode ser usado no grupo autorizado.'
         )
@@ -197,7 +213,7 @@ async def horas(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def descricao(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.chat.id != GRUPO_PERMITIDO:
+    if not chat_autorizado(update.message.chat.id):
         await update.message.reply_text(
             '❌ Este comando só pode ser usado no grupo autorizado.'
         )
@@ -216,7 +232,7 @@ async def descricao(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def done(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.chat.id != GRUPO_PERMITIDO:
+    if not chat_autorizado(update.message.chat.id):
         await update.message.reply_text(
             '❌ Este comando só pode ser usado no grupo autorizado.'
         )
@@ -227,7 +243,7 @@ async def done(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def completo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.chat.id != GRUPO_PERMITIDO:
+    if not chat_autorizado(update.message.chat.id):
         await update.message.reply_text(
             '❌ Este comando só pode ser usado no grupo autorizado.'
         )
@@ -248,7 +264,7 @@ async def completo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def transbordo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.chat.id != GRUPO_PERMITIDO:
+    if not chat_autorizado(update.message.chat.id):
         await update.message.reply_text(
             '❌ Este comando só pode ser usado no grupo autorizado.'
         )
