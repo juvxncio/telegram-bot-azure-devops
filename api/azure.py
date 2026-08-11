@@ -31,9 +31,13 @@ class AzureDevOpsAPI:
             r = self.session.get(url, params=params, timeout=10)
             if r.status_code == 200:
                 return r.json()
+            else:
+                print(f"⚠️ Erro {r.status_code} ao acessar: {url}")
+                return None
+        except requests.RequestException as e:
+            print(f"⚠️ Erro de requisição: {e} -> {url}")
             return None
-        except requests.RequestException:
-            return None
+
 
     def puxar_projetos(self):
         lista_projetos = []
@@ -100,8 +104,12 @@ class AzureDevOpsAPI:
         sprints_filtradas = []
 
         for projeto, time in projetos_times:
-            url = f'{self.url_base}/{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations?api-version=7.0'
+            url = f'{self.url_base}{quote(projeto)}/_apis/work/teamsettings/iterations?api-version=7.0'
             data = self._get(url)
+            if not data:
+                print(f"⚠️ Nenhuma sprint retornada para {projeto} / {time}")
+                continue
+
             if not data:
                 continue
 
@@ -124,6 +132,7 @@ class AzureDevOpsAPI:
                     ):
                         sprints_filtradas.append((projeto, time, sprint['id']))
 
+        print(f"Tentando buscar sprints de: {projeto} / {time}")
         return sprints_filtradas
 
     def busca_sprint(self, projetos_times, mes_alvo=None, ano_alvo=None):
@@ -137,7 +146,7 @@ class AzureDevOpsAPI:
         )
 
     def busca_id_work_items(self, projeto, time, sprint_id):
-        url = f'{self.url_base}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0'
+        url = f"{self.url_base}{quote(projeto)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0"
         data = self._get(url)
         if not data:
             return []
@@ -218,3 +227,93 @@ class AzureDevOpsAPI:
             'Microsoft.VSTS.Common.ClosedBy',
         ]
         return self._busca_work_items_por_chunks(projeto, ids, fields)
+
+if __name__ == "__main__":
+
+
+
+    api = AzureDevOpsAPI()
+
+
+
+
+    print("=== TESTE: Projetos ===")
+
+
+    projetos = api.puxar_projetos()
+
+
+    print(projetos)
+
+
+
+
+    if projetos:
+
+
+        print("\n=== TESTE: Times ===")
+
+
+        times = api.puxar_times(projetos)
+
+
+        print(times)
+
+
+
+
+        print("\n=== TESTE: Mesclagem ===")
+
+
+        projetos_times = api.mesclar_projeto_com_time(projetos, times)
+
+
+        print(projetos_times)
+
+
+
+
+        print("\n=== TESTE: Sprints ===")
+
+
+        sprints = api.busca_sprint(projetos_times)
+
+
+        print(sprints)
+
+
+
+
+        if sprints:
+
+
+            print("\n=== TESTE: Work Items ===")
+
+
+            projeto, time, sprint_id = sprints[0]
+
+
+            ids = api.busca_id_work_items(projeto, time, sprint_id)
+
+
+            print(f"IDs encontrados: {ids}")
+
+
+
+
+            if ids:
+
+
+                print("\n=== TESTE: Horas por pessoa ===")
+
+
+                horas = api.busca_horas_work_items(projeto, ids)
+
+
+                print(horas)
+
+
+    else:
+
+
+        print("Nenhum projeto retornado. Verifique se as variáveis de ambiente estão certas.")
