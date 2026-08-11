@@ -112,7 +112,7 @@ class AzureDevOpsAPI:
         sprints_filtradas = []
 
         for projeto, time in projetos_times:
-            url = f'{self.url_base}{quote(projeto)}/_apis/work/teamsettings/iterations?api-version=7.0'
+            url = f'{self.url_base}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations?api-version=7.0'
             data = self._get(url)
             if not data:
                 print(f"⚠️ Nenhuma sprint retornada para {projeto} / {time}")
@@ -150,7 +150,7 @@ class AzureDevOpsAPI:
         )
 
     def busca_id_work_items(self, projeto, time, sprint_id):
-        url = f"{self.url_base}{quote(projeto)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0"
+        url = f"{self.url_base}{quote(projeto)}/{quote(time)}/_apis/work/teamsettings/iterations/{sprint_id}/workitems?api-version=7.0"
         data = self._get(url)
         if not data:
             return []
