@@ -66,37 +66,26 @@ class AzureDevOpsAPI:
         return lista_projetos
 
     def puxar_times(self, lista_projetos):
-        lista_todos_times = []
+        """Retorna pares (projeto, time) usando a associação oficial de
+        cada projeto com seus times, direto da API — sem adivinhar por
+        nome, já que um time só pertence a um único projeto no Azure
+        DevOps."""
+        projetos_times = []
         for projeto in lista_projetos:
             url = f'{self.url_base}_apis/projects/{projeto}/teams?api-version=7.0'
             for time in self._get_all(url):
-                lista_todos_times.append(time['name'])
-        return lista_todos_times
-
-    def mesclar_projeto_com_time(self, lista_projetos, lista_todos_times):
-        lista_times_ativos = [
-            t for t in lista_todos_times
-            if not any(palavra in t for palavra in self.lista_times_ignorados)
-        ]
-
-        projetos_times = []
-        usados = set()
-
-        for projeto in lista_projetos:
-            times_relacionados = [
-                t for t in lista_times_ativos
-                if projeto.split(' - ')[0].lower() in t.lower() or projeto.lower() in t.lower()
-            ]
-
-            if times_relacionados:
-                for t in times_relacionados:
-                    if t not in usados:
-                        projetos_times.append((projeto, t))
-                        usados.add(t)
-            else:
-                print(f"⚠️ Nenhum time correspondente encontrado para o projeto '{projeto}' — ignorado.")
-
+                projetos_times.append((projeto, time['name']))
         return projetos_times
+
+    def mesclar_projeto_com_time(self, projetos_times):
+        """Remove pares cujo time bate em lista_times_ignorados (times
+        genéricos como 'Key User', 'Spassu' etc., que não representam
+        equipes de entrega reais)."""
+        return [
+            (projeto, time)
+            for projeto, time in projetos_times
+            if not any(palavra in time for palavra in self.lista_times_ignorados)
+        ]
 
 
     def _filtra_sprints(
@@ -247,7 +236,7 @@ if __name__ == "__main__":
         print(times)
 
         print("\n=== TESTE: Mesclagem ===")
-        projetos_times = api.mesclar_projeto_com_time(projetos, times)
+        projetos_times = api.mesclar_projeto_com_time(times)
         print(projetos_times)
 
         print("\n=== TESTE: Sprints ===")

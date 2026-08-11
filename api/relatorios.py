@@ -21,10 +21,8 @@ class Relatorios:
         """Busca projetos/times/sprints e os IDs de work items uma única vez,
         para ser reaproveitado por vários relatórios do mesmo período."""
         lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+        lista_projetos_times = self.api.puxar_times(lista_projetos)
+        projetos_times = self.api.mesclar_projeto_com_time(lista_projetos_times)
 
         if a_partir:
             sprints = self.api.busca_sprints(
@@ -235,10 +233,8 @@ class Relatorios:
 
     def gera_relatorio_transbordo(self, mes_inicio=None, ano_inicio=None):
         lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+        lista_projetos_times = self.api.puxar_times(lista_projetos)
+        projetos_times = self.api.mesclar_projeto_com_time(lista_projetos_times)
 
         lista_tudo = []
         historias_transbordadas = []
