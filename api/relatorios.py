@@ -90,8 +90,10 @@ class Relatorios:
                 state = fields.get('System.State')
 
                 for item in checklist:
+                    inicio_template = re.escape(item['template'][:20])
+                    fim_template = re.escape(item['template'][-15:])
                     item['valor'] = re.sub(
-                        rf'{item["template"][:20]}.+{item["template"][-15:]}\s*',
+                        rf'{inicio_template}.+{fim_template}\s*',
                         '',
                         fields.get(item['campo'], ''),
                     )
