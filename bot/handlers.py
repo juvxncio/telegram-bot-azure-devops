@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 from io import BytesIO
@@ -166,19 +167,27 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text('⏳ Gerando relatório, aguarde...')
 
         if cmd == '/horas':
-            relatorio = relatorios.gera_relatorio_horas(mes=mes, ano=ano)
+            relatorio = await asyncio.to_thread(
+                relatorios.gera_relatorio_horas, mes=mes, ano=ano
+            )
         elif cmd.startswith('/descricao'):
             tipo = cmd.split()[1]
-            relatorio = relatorios.gera_relatorio_descricao(
-                tipo_solicitado=tipo, mes=mes, ano=ano
+            relatorio = await asyncio.to_thread(
+                relatorios.gera_relatorio_descricao,
+                tipo_solicitado=tipo, mes=mes, ano=ano,
             )
         elif cmd == '/done':
-            relatorio = relatorios.gera_relatorio_done(mes=mes, ano=ano)
+            relatorio = await asyncio.to_thread(
+                relatorios.gera_relatorio_done, mes=mes, ano=ano
+            )
         elif cmd == '/completo':
-            relatorio = relatorios.gera_relatorio_completo(mes=mes, ano=ano)
+            relatorio = await asyncio.to_thread(
+                relatorios.gera_relatorio_completo, mes=mes, ano=ano
+            )
         elif cmd == '/transbordo':
-            relatorio = relatorios.gera_relatorio_transbordo(
-                mes_inicio=mes, ano_inicio=ano
+            relatorio = await asyncio.to_thread(
+                relatorios.gera_relatorio_transbordo,
+                mes_inicio=mes, ano_inicio=ano,
             )
         else:
             relatorio = '❌ Comando não reconhecido.'
@@ -196,7 +205,7 @@ async def horas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     mes, ano = calcula_mes_ano_padrao(context.args)
-    texto = relatorios.gera_relatorio_horas(mes=mes, ano=ano)
+    texto = await asyncio.to_thread(relatorios.gera_relatorio_horas, mes=mes, ano=ano)
     await enviar_relatorio(update, texto, 'horas', mes, ano)
 
 
@@ -213,8 +222,9 @@ async def descricao(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     tipo = context.args[0]
     mes, ano = calcula_mes_ano_padrao(context.args[1:])
-    texto = relatorios.gera_relatorio_descricao(
-        tipo_solicitado=tipo, mes=mes, ano=ano
+    texto = await asyncio.to_thread(
+        relatorios.gera_relatorio_descricao,
+        tipo_solicitado=tipo, mes=mes, ano=ano,
     )
     await enviar_relatorio(update, texto, f'descricao_{tipo}', mes, ano)
 
@@ -226,7 +236,7 @@ async def done(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     mes, ano = calcula_mes_ano_padrao(context.args)
-    texto = relatorios.gera_relatorio_done(mes=mes, ano=ano)
+    texto = await asyncio.to_thread(relatorios.gera_relatorio_done, mes=mes, ano=ano)
     await enviar_relatorio(update, texto, 'done', mes, ano)
 
 
@@ -237,7 +247,7 @@ async def completo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     mes, ano = calcula_mes_ano_padrao(context.args)
-    texto = relatorios.gera_relatorio_completo(mes=mes, ano=ano)
+    texto = await asyncio.to_thread(relatorios.gera_relatorio_completo, mes=mes, ano=ano)
     await enviar_relatorio(update, texto, 'completo', mes, ano)
 
 
@@ -251,8 +261,9 @@ async def transbordo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text('❌ Informar o mês e ano de início.')
         return
     mes, ano = int(context.args[0]), int(context.args[1])
-    texto = relatorios.gera_relatorio_transbordo(
-        mes_inicio=mes, ano_inicio=ano
+    texto = await asyncio.to_thread(
+        relatorios.gera_relatorio_transbordo,
+        mes_inicio=mes, ano_inicio=ano,
     )
     await enviar_relatorio(update, texto, 'transbordo', mes, ano)
 
