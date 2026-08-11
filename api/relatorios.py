@@ -17,8 +17,36 @@ class Relatorios:
         )
         self.dominio_autorizado_done = os.getenv('DOMINIO_AUTORIZADO_DONE')
 
+    def _contexto(self, mes=None, ano=None, a_partir=False):
+        """Busca projetos/times/sprints e os IDs de work items uma única vez,
+        para ser reaproveitado por vários relatórios do mesmo período."""
+        lista_projetos = self.api.puxar_projetos()
+        lista_todos_times = self.api.puxar_times(lista_projetos)
+        projetos_times = self.api.mesclar_projeto_com_time(
+            lista_projetos, lista_todos_times
+        )
+
+        if a_partir:
+            sprints = self.api.busca_sprints(
+                projetos_times, mes_alvo=mes, ano_alvo=ano
+            )
+        else:
+            sprints = self.api.busca_sprint(
+                projetos_times, mes_alvo=mes, ano_alvo=ano
+            )
+
+        return [
+            (
+                projeto,
+                time,
+                sprint_id,
+                self.api.busca_id_work_items(projeto, time, sprint_id),
+            )
+            for projeto, time, sprint_id in sprints
+        ]
+
     def gera_relatorio_descricao(
-        self, tipo_solicitado=None, mes=None, ano=None
+        self, tipo_solicitado=None, mes=None, ano=None, contexto=None
     ):
         checklist = []
 
@@ -64,20 +92,12 @@ class Relatorios:
 
         itens_a_checar = ', '.join([item['nome'] for item in checklist])
 
-        lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+        contexto = contexto if contexto is not None else self._contexto(mes, ano)
 
         work_items_por_pessoa = {}
         ids_por_pessoa = {}
 
-        sprints = self.api.busca_sprint(
-            projetos_times, mes_alvo=mes, ano_alvo=ano
-        )
-        for projeto, time, sprint_id in sprints:
-            ids = self.api.busca_id_work_items(projeto, time, sprint_id)
+        for projeto, time, sprint_id, ids in contexto:
             wi = self.api.busca_campos_work_items(projeto, ids)
             for work_item in wi:
                 fields = work_item.get('fields', {})
@@ -132,20 +152,12 @@ class Relatorios:
 
         return texto
 
-    def gera_relatorio_horas(self, mes=None, ano=None):
-        lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+    def gera_relatorio_horas(self, mes=None, ano=None, contexto=None):
+        contexto = contexto if contexto is not None else self._contexto(mes, ano)
 
         total_por_pessoa = {}
-        sprints = self.api.busca_sprint(
-            projetos_times, mes_alvo=mes, ano_alvo=ano
-        )
 
-        for projeto, time, sprint_id in sprints:
-            ids = self.api.busca_id_work_items(projeto, time, sprint_id)
+        for projeto, time, sprint_id, ids in contexto:
             horas = self.api.busca_horas_work_items(projeto, ids)
             for pessoa, total in horas.items():
                 total_por_pessoa[pessoa] = (
@@ -184,12 +196,8 @@ class Relatorios:
         texto += f'ℹ️ Horas úteis do mês: {horas_uteis}h\n'
         return texto
 
-    def gera_relatorio_done(self, mes=None, ano=None):
-        lista_projetos = self.api.puxar_projetos()
-        lista_todos_times = self.api.puxar_times(lista_projetos)
-        projetos_times = self.api.mesclar_projeto_com_time(
-            lista_projetos, lista_todos_times
-        )
+    def gera_relatorio_done(self, mes=None, ano=None, contexto=None):
+        contexto = contexto if contexto is not None else self._contexto(mes, ano)
 
         data = datetime(
             ano or datetime.now().year, mes or datetime.now().month, 1
@@ -197,12 +205,8 @@ class Relatorios:
         mes_nome = format_date(data, 'LLLL/yyyy', locale='pt_BR')
 
         dones_nao_autorizados = []
-        sprints = self.api.busca_sprint(
-            projetos_times, mes_alvo=mes, ano_alvo=ano
-        )
 
-        for projeto, time, sprint_id in sprints:
-            ids = self.api.busca_id_work_items(projeto, time, sprint_id)
+        for projeto, time, sprint_id, ids in contexto:
             wi = self.api.busca_done_work_items(projeto, ids)
             for work_item in wi:
                 fields = work_item.get('fields', {})
@@ -270,4 +274,18 @@ class Relatorios:
             )
         return f'⚠️ Histórias com transbordo em {mes_nome}:\n\n' + ''.join(
             historias_transbordadas
+        )
+
+    def gera_relatorio_completo(self, mes=None, ano=None):
+        contexto = self._contexto(mes, ano)
+        return (
+            self.gera_relatorio_descricao('Historia', mes=mes, ano=ano, contexto=contexto)
+            + '\n\n'
+            + self.gera_relatorio_descricao('Bug', mes=mes, ano=ano, contexto=contexto)
+            + '\n\n'
+            + self.gera_relatorio_descricao('Task', mes=mes, ano=ano, contexto=contexto)
+            + '\n\n'
+            + self.gera_relatorio_done(mes=mes, ano=ano, contexto=contexto)
+            + '\n\n'
+            + self.gera_relatorio_horas(mes=mes, ano=ano, contexto=contexto)
         )

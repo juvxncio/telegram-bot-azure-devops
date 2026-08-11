@@ -175,19 +175,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif cmd == '/done':
             relatorio = relatorios.gera_relatorio_done(mes=mes, ano=ano)
         elif cmd == '/completo':
-            relatorio = (
-                relatorios.gera_relatorio_descricao(
-                    'Historia', mes=mes, ano=ano
-                )
-                + '\n\n'
-                + relatorios.gera_relatorio_descricao('Bug', mes=mes, ano=ano)
-                + '\n\n'
-                + relatorios.gera_relatorio_descricao('Task', mes=mes, ano=ano)
-                + '\n\n'
-                + relatorios.gera_relatorio_done(mes=mes, ano=ano)
-                + '\n\n'
-                + relatorios.gera_relatorio_horas(mes=mes, ano=ano)
-            )
+            relatorio = relatorios.gera_relatorio_completo(mes=mes, ano=ano)
         elif cmd == '/transbordo':
             relatorio = relatorios.gera_relatorio_transbordo(
                 mes_inicio=mes, ano_inicio=ano
@@ -249,17 +237,7 @@ async def completo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     mes, ano = calcula_mes_ano_padrao(context.args)
-    texto = (
-        relatorios.gera_relatorio_descricao('Historia', mes=mes, ano=ano)
-        + '\n\n'
-        + relatorios.gera_relatorio_descricao('Bug', mes=mes, ano=ano)
-        + '\n\n'
-        + relatorios.gera_relatorio_descricao('Task', mes=mes, ano=ano)
-        + '\n\n'
-        + relatorios.gera_relatorio_done(mes=mes, ano=ano)
-        + '\n\n'
-        + relatorios.gera_relatorio_horas(mes=mes, ano=ano)
-    )
+    texto = relatorios.gera_relatorio_completo(mes=mes, ano=ano)
     await enviar_relatorio(update, texto, 'completo', mes, ano)
 
 
