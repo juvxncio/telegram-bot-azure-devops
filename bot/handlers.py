@@ -12,8 +12,15 @@ from api.relatorios import Relatorios
 load_dotenv()
 GRUPO_PERMITIDO = int(os.getenv('GRUPO_PERMITIDO'))
 
-api = AzureDevOpsAPI()
-relatorios = Relatorios(api)
+_relatorios = None
+
+
+def obter_relatorios() -> Relatorios:
+    global _relatorios
+    if _relatorios is None:
+        _relatorios = Relatorios(AzureDevOpsAPI())
+    return _relatorios
+
 
 COMMANDS = {
     '/horas': '⌚️ Relatório de horas trabalhadas',
@@ -168,25 +175,25 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if cmd == '/horas':
             relatorio = await asyncio.to_thread(
-                relatorios.gera_relatorio_horas, mes=mes, ano=ano
+                obter_relatorios().gera_relatorio_horas, mes=mes, ano=ano
             )
         elif cmd.startswith('/descricao'):
             tipo = cmd.split()[1]
             relatorio = await asyncio.to_thread(
-                relatorios.gera_relatorio_descricao,
+                obter_relatorios().gera_relatorio_descricao,
                 tipo_solicitado=tipo, mes=mes, ano=ano,
             )
         elif cmd == '/done':
             relatorio = await asyncio.to_thread(
-                relatorios.gera_relatorio_done, mes=mes, ano=ano
+                obter_relatorios().gera_relatorio_done, mes=mes, ano=ano
             )
         elif cmd == '/completo':
             relatorio = await asyncio.to_thread(
-                relatorios.gera_relatorio_completo, mes=mes, ano=ano
+                obter_relatorios().gera_relatorio_completo, mes=mes, ano=ano
             )
         elif cmd == '/transbordo':
             relatorio = await asyncio.to_thread(
-                relatorios.gera_relatorio_transbordo,
+                obter_relatorios().gera_relatorio_transbordo,
                 mes_inicio=mes, ano_inicio=ano,
             )
         else:
@@ -205,7 +212,7 @@ async def horas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     mes, ano = calcula_mes_ano_padrao(context.args)
-    texto = await asyncio.to_thread(relatorios.gera_relatorio_horas, mes=mes, ano=ano)
+    texto = await asyncio.to_thread(obter_relatorios().gera_relatorio_horas, mes=mes, ano=ano)
     await enviar_relatorio(update, texto, 'horas', mes, ano)
 
 
@@ -223,7 +230,7 @@ async def descricao(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tipo = context.args[0]
     mes, ano = calcula_mes_ano_padrao(context.args[1:])
     texto = await asyncio.to_thread(
-        relatorios.gera_relatorio_descricao,
+        obter_relatorios().gera_relatorio_descricao,
         tipo_solicitado=tipo, mes=mes, ano=ano,
     )
     await enviar_relatorio(update, texto, f'descricao_{tipo}', mes, ano)
@@ -236,7 +243,7 @@ async def done(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     mes, ano = calcula_mes_ano_padrao(context.args)
-    texto = await asyncio.to_thread(relatorios.gera_relatorio_done, mes=mes, ano=ano)
+    texto = await asyncio.to_thread(obter_relatorios().gera_relatorio_done, mes=mes, ano=ano)
     await enviar_relatorio(update, texto, 'done', mes, ano)
 
 
@@ -247,7 +254,7 @@ async def completo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     mes, ano = calcula_mes_ano_padrao(context.args)
-    texto = await asyncio.to_thread(relatorios.gera_relatorio_completo, mes=mes, ano=ano)
+    texto = await asyncio.to_thread(obter_relatorios().gera_relatorio_completo, mes=mes, ano=ano)
     await enviar_relatorio(update, texto, 'completo', mes, ano)
 
 
@@ -262,7 +269,7 @@ async def transbordo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     mes, ano = int(context.args[0]), int(context.args[1])
     texto = await asyncio.to_thread(
-        relatorios.gera_relatorio_transbordo,
+        obter_relatorios().gera_relatorio_transbordo,
         mes_inicio=mes, ano_inicio=ano,
     )
     await enviar_relatorio(update, texto, 'transbordo', mes, ano)
