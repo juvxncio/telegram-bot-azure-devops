@@ -38,14 +38,29 @@ class AzureDevOpsAPI:
             print(f"⚠️ Erro de requisição: {e} -> {url}")
             return None
 
+    def _get_all(self, url, params=None):
+        """Segue o header x-ms-continuationtoken para juntar todas as páginas."""
+        resultados = []
+        params = dict(params or {})
+        while True:
+            try:
+                r = self.session.get(url, params=params, timeout=10)
+            except requests.RequestException as e:
+                print(f"⚠️ Erro de requisição: {e} -> {url}")
+                break
+            if r.status_code != 200:
+                print(f"⚠️ Erro {r.status_code} ao acessar: {url}")
+                break
+            resultados.extend(r.json().get('value', []))
+            token = r.headers.get('x-ms-continuationtoken')
+            if not token:
+                break
+            params['continuationToken'] = token
+        return resultados
 
     def puxar_projetos(self):
         lista_projetos = []
-        data = self._get(self.url_projetos)
-        if not data:
-            return []
-
-        for projeto in data['value']:
+        for projeto in self._get_all(self.url_projetos):
             if 'SUSPENSO' not in projeto['name'].upper():
                 lista_projetos.append(projeto['name'])
         return lista_projetos
@@ -54,10 +69,7 @@ class AzureDevOpsAPI:
         lista_todos_times = []
         for projeto in lista_projetos:
             url = f'{self.url_base}_apis/projects/{projeto}/teams?api-version=7.0'
-            data = self._get(url)
-            if not data:
-                continue
-            for time in data.get('value', []):
+            for time in self._get_all(url):
                 lista_todos_times.append(time['name'])
         return lista_todos_times
 
