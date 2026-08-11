@@ -110,9 +110,6 @@ class AzureDevOpsAPI:
                 print(f"⚠️ Nenhuma sprint retornada para {projeto} / {time}")
                 continue
 
-            if not data:
-                continue
-
             for sprint in data.get('value', []):
                 start_raw = sprint['attributes'].get('startDate')
                 finish_raw = sprint['attributes'].get('finishDate')
@@ -132,7 +129,6 @@ class AzureDevOpsAPI:
                     ):
                         sprints_filtradas.append((projeto, time, sprint['id']))
 
-        print(f"Tentando buscar sprints de: {projeto} / {time}")
         return sprints_filtradas
 
     def busca_sprint(self, projetos_times, mes_alvo=None, ano_alvo=None):
