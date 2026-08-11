@@ -87,7 +87,6 @@ class AzureDevOpsAPI:
             if not any(palavra in time for palavra in self.lista_times_ignorados)
         ]
 
-
     def _filtra_sprints(
         self,
         projetos_times,
@@ -220,6 +219,7 @@ class AzureDevOpsAPI:
             'Microsoft.VSTS.Common.ClosedBy',
         ]
         return self._busca_work_items_por_chunks(projeto, ids, fields)
+
 
 if __name__ == "__main__":
     api = AzureDevOpsAPI()
